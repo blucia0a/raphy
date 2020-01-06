@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+//use std::cmp::Ordering;
 
 //extern crate rand;
 //use rand::Rng;
@@ -13,7 +13,7 @@ enum Graph<'a, T: VtxTrait> {
     vtxs: Vec< Box< &'a Vertex<T> > >,
     next_vtx: usize,
   },
-  Empty, 
+  Empty
 }
 
 #[derive(Debug)]
@@ -23,7 +23,7 @@ enum Vertex<T: VtxTrait> {
     val: T,
     neigh: Vec<Box<u64>>,
   },
-  Empty,
+  Empty
 }
 
 impl<'a, T: VtxTrait> Graph<'a, T> {
@@ -44,9 +44,9 @@ impl<'a, T: VtxTrait> Graph<'a, T> {
 
   fn add_vtx(&mut self, v: &'a Vertex<T>){
 
-    let mut ins_id: usize = 0;
+    let ins_id: usize;
     match v{
-      Vertex::V{ ref id, ref val, ref neigh } => ins_id = *id as usize,
+      Vertex::V{ ref id, .. } => ins_id = *id as usize,
       Vertex::Empty => return,
     };
 
@@ -77,8 +77,8 @@ impl<T: VtxTrait> Vertex<T> {
 
     match self{
 
-      &mut Vertex::V{ ref id, ref val, ref mut neigh}  => {
-        neigh.push( Box::new(*id) );
+      &mut Vertex::V{ ref mut neigh, ..}  => {
+        neigh.push( Box::new(id) );
       },
 
       &mut Vertex::Empty => {
@@ -93,11 +93,11 @@ impl<T: VtxTrait> Vertex<T> {
 
     match self{
 
-      &mut Vertex::V{ ref id, ref val, ref mut neigh}  => {
+      &mut Vertex::V{ ref mut neigh, .. }  => {
 
-        let mut new_id: u64 = 0; 
+        let new_id: u64; 
         match nv{
-          Vertex::V{ ref id, ref val, ref neigh } => new_id = *id,
+          Vertex::V{ ref id, .. } => new_id = *id,
           Vertex::Empty => { return; }
         }
         neigh.push(Box::new(new_id))
@@ -109,9 +109,11 @@ impl<T: VtxTrait> Vertex<T> {
 
   }
 
+/*
   fn find(&self, fv: T) -> bool {
     true
   }
+*/
 
   fn print(&self){
 
@@ -134,16 +136,16 @@ impl<T: VtxTrait> Vertex<T> {
     }
 
   }
-  
+/*  
   fn traverse(&self, func: fn(v: &T)){
   }
-  
+*/
 }
-
+/*
 fn prt<T: VtxTrait>(v: &T){
 
 }
-
+*/
 
 
 fn main(){
