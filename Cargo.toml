@@ -5,4 +5,4 @@ authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-#rand = { version = "0.7", features = ["wasm-bindgen"] }
+rand = { version = "0.7", features = ["wasm-bindgen"] }

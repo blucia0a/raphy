@@ -12,7 +12,7 @@ impl<T> VtxTrait for T where T: Ord + std::fmt::Debug + std::fmt::Display {}
 enum Graph<T: VtxTrait> {
   G{
     vtxs: Vec< Box< Vertex<T> > >,
-    next_vtx: usize,
+    next_vtx: u64,
   },
 }
 
@@ -30,6 +30,14 @@ impl<T: VtxTrait> Graph< T> {
   fn new() -> Graph<T>{
     Graph::G{ vtxs: vec![], next_vtx: 0}
   } 
+  
+  fn add_neigh(&mut self, ind: u64, nei: u64){
+    match self{
+      Graph::G{ ref mut vtxs, ..} => {
+        vtxs[ind as usize].add_vtx(nei);
+      }
+    }
+  }
 
   fn init_vtx(&mut self, ind: u64, v: T){
     match self{
@@ -49,25 +57,12 @@ impl<T: VtxTrait> Graph< T> {
 
         *next_vtx = *next_vtx + 1;
 
-        vtxs.insert(next_id, Box::new(Vertex::Empty) );
+        vtxs.insert(next_id as usize, Box::new(Vertex::Empty) );
 
       },
 
     }
 
-  }
-
-  fn add_vtx(&mut self, v: Vertex<T>){
-
-    let ins_id: usize;
-    match v{
-      Vertex::V{ ref id, .. } => ins_id = *id as usize,
-      Vertex::Empty => return,
-    };
-
-    match self{
-      Graph::G{ ref mut vtxs, .. } => { vtxs.insert(ins_id, Box::new(v)); },
-    };
   }
 
   fn print(&self){
@@ -79,12 +74,6 @@ impl<T: VtxTrait> Graph< T> {
 
 impl<T: VtxTrait> Vertex<T> {
 
-  fn new(id: u64, nv: T) -> Vertex<T> {
-
-    Vertex::Empty
-
-  }
-
   fn init(&mut self, new_id: u64, nv: T){
     match self{
       &mut Vertex::V{ .. } => {},
@@ -94,25 +83,18 @@ impl<T: VtxTrait> Vertex<T> {
     }
   }
 
-  fn add_vtx(&mut self, nv: &Vertex<T>){
+  fn add_vtx(&mut self, n_id: u64){
 
     match self{
 
       &mut Vertex::V{ ref mut neigh, .. }  => {
-
-        let new_id: u64; 
-        match nv{
-          Vertex::V{ ref id, .. } => new_id = *id,
-          Vertex::Empty => return,
-        }
-        neigh.push(Box::new(new_id))
-
+        neigh.push(Box::new(n_id));
       },
       Vertex::Empty => return,
+
     }
 
   }
-
 /*
   fn find(&self, fv: T) -> bool {
     true
@@ -156,10 +138,13 @@ fn main(){
   let mut rng = rand::thread_rng();
 
   let mut gg: Graph<u64> = Graph::new();
-  for i in 0..1000 {
+  for i in 0..10 {
     gg.create_vtx( );
     gg.init_vtx( i, rng.gen_range(0,2000000) as u64 );
-    gg.add_neigh( i, 
+    let jb = rng.gen_range(0,5);
+    for _ in 0..jb {
+      gg.add_neigh( i, rng.gen_range(0,10) as u64 ); 
+    }
   }
   gg.print();
 
