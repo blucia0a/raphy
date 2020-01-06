@@ -1,0 +1,5 @@
+raphy - a rust graph library
+
+I am writing this graph library to learn how to write programs in Rust.
+
+I expect this code to be slow, non-idiomatic, and highly changey
