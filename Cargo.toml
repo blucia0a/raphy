@@ -3,6 +3,8 @@ name = "raphy"
 version = "0.1.0"
 authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
+description = "A rudimentary graph data structure library"
+license = "Apache-2.0"
 
 [dependencies]
-rand = { version = "0.7", features = ["wasm-bindgen"] }
+
