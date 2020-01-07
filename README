@@ -1,7 +1,8 @@
-raphy - a rudimentary rust graph library - Brandon Lucia - 2020 -- 
+raphy -- Brandon Lucia -- 2020
+A rudimentary rust graph library.
 
-I am writing this graph library to learn how to write programs in Rust.
+Graphs have vertices that have a numeric identifier and polymorphically can
+carry any payload / value type that is displayable and orderable.  
 
-I expect this code to be slow, non-idiomatic, and highly changey.
-
-There is an example in examples/ that will show how to build and use a graph.
+There is an example in examples/ that shows how to build and use a graph with
+u64 payload values.
