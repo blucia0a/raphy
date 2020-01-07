@@ -1,5 +1,5 @@
-use crate::raphy::VtxTrait;
-use crate::raphy::vertex::Vertex;
+use crate::VtxTrait;
+use crate::vertex::Vertex;
 
 #[derive(Debug)]
 pub struct Graph<T: VtxTrait> {

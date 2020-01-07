@@ -1,4 +1,4 @@
-use crate::raphy::VtxTrait;
+use crate::VtxTrait;
 
 #[derive(Debug)]
 pub enum Vertex<T: VtxTrait> {

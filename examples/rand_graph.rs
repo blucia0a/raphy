@@ -2,7 +2,7 @@ extern crate rand;
 use rand::Rng;
 
 extern crate raphy;
-use raphy::raphy::graph::Graph;
+use raphy::graph::Graph;
 
 fn main(){
 
