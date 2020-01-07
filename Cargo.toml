@@ -5,7 +5,6 @@ authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
 description = "A rudimentary graph data structure library"
 license = "Apache-2.0"
-license-file = "LICENSE"
 
 [dependencies]
 
