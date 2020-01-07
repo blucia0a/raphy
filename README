@@ -1,5 +1,7 @@
-raphy - a rust graph library
+raphy - a rust graph library - Brandon Lucia - 2020 -- 
 
 I am writing this graph library to learn how to write programs in Rust.
 
-I expect this code to be slow, non-idiomatic, and highly changey
+I expect this code to be slow, non-idiomatic, and highly changey.
+
+There is an example in examples/ that will show how to build and use a graph.
