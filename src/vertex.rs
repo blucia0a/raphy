@@ -44,13 +44,18 @@ impl<T: VtxTrait> Vertex<T> {
 
       Vertex::V{ ref id, ref val, ref neigh } => { 
 
-        println!("{} => {}\n|----|",id,val); 
+        let mut s = String::new();
+        let f = format!("v{} = {}: [",id,val);
+        let fs = &f[..];
+        s.push_str(fs);
 
         for i in 0..neigh.len() { 
-          println!("{}",neigh[i]); 
+          let ff = format!("{},",neigh[i]);
+          let ffs = &ff[..];
+          s.push_str(ffs); 
         } 
 
-        println!("|----|");
+        println!("{}]",s);
 
       },
       Vertex::Empty => return,

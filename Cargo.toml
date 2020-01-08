@@ -10,4 +10,4 @@ repository = "https://github.com/blucia0a/raphy"
 documentation = "https://github.com/blucia0a/raphy/blob/master/README"
 
 [dependencies]
-
+rand = "0.7.0"

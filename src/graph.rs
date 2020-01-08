@@ -5,6 +5,25 @@ use crate::VtxTrait;
 use crate::vertex::Vertex;
 
 #[derive(Debug)]
+pub struct GraphIter<'a, T: VtxTrait> {
+  inner: &'a Graph<T>,
+  cur: usize,
+}
+
+impl<'a, T: VtxTrait> Iterator for GraphIter<'a, T> {
+  type Item = &'a Vertex<T>;
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.cur < self.inner.vtxs.len() {
+      let i: usize = self.cur;
+      self.cur = self.cur + 1;
+      Some(&*self.inner.vtxs[i])
+    } else {
+      None
+    }
+  }
+}
+
+#[derive(Debug)]
 pub struct Graph<T: VtxTrait> {
   vtxs: Vec< Box< Vertex<T> > >,
   next_vtx: u64,
@@ -15,6 +34,10 @@ impl<T: VtxTrait> Graph< T> {
   pub fn new() -> Graph<T>{
     Graph{ vtxs: vec![], next_vtx: 0}
   } 
+
+  pub fn iter<'a>(&'a self) -> GraphIter<'a, T> {
+    GraphIter{ inner: self, cur: 0 }
+  }
 
   pub fn add_vtx(&mut self, ind: u64, v: T){
     self.create_vtx( );
