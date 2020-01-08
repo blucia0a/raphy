@@ -38,6 +38,27 @@ impl<T: VtxTrait> Vertex<T> {
 
   }
 
+  pub fn set_val(&mut self, nv: T){
+
+    match self{
+
+      Vertex::V{ ref mut val, .. } => { 
+        *val = nv;  
+      },
+      Vertex::Empty => return,
+   }
+    
+  }
+
+  pub fn get_val(self) -> Option<T>{
+    match self{
+
+      Vertex::V{ val, .. } => Some(val),
+      Vertex::Empty => None,
+    }
+
+  }
+
   pub fn print(&self){
 
     match self{
