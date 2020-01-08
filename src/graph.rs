@@ -43,6 +43,21 @@ impl<T: VtxTrait> Graph< T> {
     self.create_vtx( );
     self.init_vtx(ind, v); 
   }
+ 
+  pub fn num_vtxs(&self) -> usize{
+    self.vtxs.len()
+  }
+  
+  pub fn get_vtx(&self, ind: usize) -> &Vertex<T>{
+    &*(self.vtxs[ind])
+  }
+
+  pub fn set_vtx(&mut self, ind: usize, new_v: Vertex<T>){
+    let vtxs = &mut self.vtxs[..];
+    if let Some(v) = vtxs.get_mut(ind){
+      *v = Box::new(new_v);
+    }
+  }
   
   pub fn add_edge(&mut self, ind: u64, nei: u64){
     self.vtxs[ind as usize].add_neigh(nei);
