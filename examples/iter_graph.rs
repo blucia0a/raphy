@@ -65,7 +65,8 @@ fn main(){
     
     gg.get_vtx(i).print();
   }
-  println!("Directly printing vertices (should match above)");
+
+  println!("Printing whole graph (should match above)");
   gg.print();
 
 }
