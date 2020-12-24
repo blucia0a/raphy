@@ -33,6 +33,9 @@ impl<'a, T: VtxTrait> Iterator for GraphIter<'a, T> {
   }
 }
 
+
+/*TODO: Need to add in a vertex property array 
+        separate from the graph structure arrays*/
 #[derive(Debug)]
 pub struct Graph<T: VtxTrait> {
   vtxs: Vec< Box< Vertex<T> > >,
