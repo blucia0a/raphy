@@ -73,7 +73,29 @@ impl<T: VtxTrait> Graph< T> {
   }
   
   pub fn add_edge(&mut self, ind: u64, nei: u64){
-    self.vtxs[ind as usize].add_neigh(nei);
+ 
+    if self.has_edge(ind,nei) == false {
+      self.vtxs[ind as usize].add_neigh(nei);
+    }
+
+  }
+ 
+  pub fn has_edge(&mut self, ind: u64, nei: u64) -> bool {  
+
+    let v = self.get_vtx(ind as usize);
+    match v{
+
+      Vertex::V{ ref id, ref val, ref neigh} => {  
+
+        for ne in neigh{
+          if **ne == nei { return true; }
+        }
+
+      },
+      Vertex::Empty => ()
+
+    }
+    return false;
   }
 
   fn init_vtx(&mut self, ind: u64, v: T){
