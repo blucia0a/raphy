@@ -35,7 +35,7 @@ fn bfs(gg: &Graph<u64>, start: usize){
     let v = gg.get_vtx(vi);
     match v{
 
-      Vertex::V{ ref id, val: _, ref neigh} => { 
+      Vertex::V{ id: _, val: _, ref neigh} => { 
 
         //println!("V: {}",*id as u64);
 
@@ -92,8 +92,8 @@ fn bfs(gg: &Graph<u64>, start: usize){
 
 fn main(){
 
-  const NUMV: u64 = 10;
-  const NUMN: u64 = 5;
+  const NUMV: u64 = 5;
+  const NUMN: u64 = 2;
   const VALRNG: u64 = 2000000;
 
   let mut rng = rand::thread_rng();
@@ -113,7 +113,11 @@ fn main(){
 
   }
   
-  println!("Graph Constructed. Traversing...");
+  println!("Graph Constructed.");
+
+  gg.print();
+
+  println!("Traversing...");
 
   /*Choose random start vertex id*/
   //let start = rng.gen_range(0,NUMV) as usize;
