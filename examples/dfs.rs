@@ -92,11 +92,16 @@ fn main(){
 
   let mut cnt: u64 = 0;
   for v in visited.iter() {
+
     match v {
+
       true => cnt = cnt + 1,
       false => ()
+
     }
+
   } 
+
   println!("Visited {} vertices",cnt);
 
 }
