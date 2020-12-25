@@ -10,111 +10,77 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-use crate::VtxTrait;
-use crate::vertex::Vertex;
-
-
-#[derive(Debug)]
-pub struct GraphIter<'a, T: VtxTrait> {
-  inner: &'a Graph<T>,
-  cur: usize,
-}
-
-impl<'a, T: VtxTrait> Iterator for GraphIter<'a, T> {
-  type Item = &'a Vertex<T>;
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.cur < self.inner.vtxs.len() {
-      let i: usize = self.cur;
-      self.cur = self.cur + 1;
-      Some(&*self.inner.vtxs[i])
-    } else {
-      None
-    }
-  }
-}
-
+//use crate::VtxTrait;
+//use crate::vertex::Vertex;
 
 /*TODO: Need to add in a vertex property array 
         separate from the graph structure arrays*/
 #[derive(Debug)]
-pub struct Graph<T: VtxTrait> {
-  vtxs: Vec< Box< Vertex<T> > >,
-  next_vtx: u64,
+pub struct Graph {
+  //vprop: Vec< Box<T> >,
+  v: usize,
+  e: usize,
+  offsets: Vec< usize >,
+  neighbs: Vec< (usize,u64) >
 }
 
 
-impl<T: VtxTrait> Graph< T> {
-  pub fn new() -> Graph<T>{
-    Graph{ vtxs: vec![], next_vtx: 0}
-  } 
+impl Graph {
 
-  pub fn iter<'a>(&'a self) -> GraphIter<'a, T> {
-    GraphIter{ inner: self, cur: 0 }
-  }
+  /*Take an edge list in and produce a Graph out*/
+  /*(u,v) -> weight*/
+  pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> Graph{
 
-  pub fn add_vtx(&mut self, ind: u64, v: T){
-    self.create_vtx( );
-    self.init_vtx(ind, v); 
-  }
- 
-  pub fn num_vtxs(&self) -> usize{
-    self.vtxs.len()
-  }
-  
-  pub fn get_vtx(&self, ind: usize) -> &Vertex<T>{
-    &*(self.vtxs[ind])
-  }
+    let mut ncnt = Vec::with_capacity(numv);
+    for i in 0..numv {
 
-  pub fn set_vtx(&mut self, ind: usize, new_v: Vertex<T>){
-    let vtxs = &mut self.vtxs[..];
-    if let Some(v) = vtxs.get_mut(ind){
-      *v = Box::new(new_v);
-    }
-  }
-  
-  pub fn add_edge(&mut self, ind: u64, nei: u64){
-     
-    if self.has_edge(ind,nei) == false {
-      self.vtxs[ind as usize].add_neigh(nei);
-    }
-
-  }
- 
-  pub fn has_edge(&mut self, ind: u64, nei: u64) -> bool {  
-
-    let v = self.get_vtx(ind as usize);
-    match v{
-
-      Vertex::V{ id: _, val: _, ref neigh} => {  
-
-        for ne in neigh{
-          if **ne == nei { return true; }
-        }
-
-      },
-      Vertex::Empty => ()
+      ncnt[i] = 0;
 
     }
-    return false;
-  }
-
-  fn init_vtx(&mut self, ind: u64, v: T){
-    self.vtxs[ind as usize].init(ind,v);
-  }
-
-  fn create_vtx(&mut self){
     
-    /*Vertex ids are private and increment with each created vtx*/
-    let next_id = self.next_vtx;
+    /*Count up the number of neighbors that each vertex has */ 
+    for edge in el {
 
-    self.next_vtx = self.next_vtx + 1;
+      match *edge {
 
-    self.vtxs.insert(next_id as usize, Box::new(Vertex::Empty) );
+        (v0,_,_) => { ncnt[v0] = ncnt[v0] + 1; }
 
-  }
+      }
 
-  pub fn print(&self){
-    for i in 0..self.vtxs.len() { self.vtxs[i].print(); }
-  }
+    }  
+    
+    let mut g = Graph{ 
+
+      v: numv,
+      e: el.len(),
+      offsets: Vec::with_capacity(numv), 
+      neighbs: Vec::with_capacity(el.len()) 
+
+    };
+ 
+    /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
+    g.offsets[0] = 0; 
+    for i in 1..ncnt.len() {
+
+      g.offsets[i] = g.offsets[i-1] + ncnt[i-1];
+
+    }
+ 
+    /*Populate the neighbor array based on the counts*/ 
+    for edge in el {
+
+      match *edge {
+
+        /*use offsets array to fill edges into the neighbs array*/
+        (v0,v1,weight) => {  }
+
+      }
+
+    }  
+
+    /*return the graph, g*/
+    g
+
+  } 
 
 }/*impl Graph*/
