@@ -37,8 +37,6 @@ fn bfs(gg: &Graph<u64>, start: usize){
 
       Vertex::V{ id: _, val: _, ref neigh} => { 
 
-        //println!("V: {}",*id as u64);
-
         for ne in neigh{
 
           let ni: usize = **ne as usize;
@@ -60,10 +58,6 @@ fn bfs(gg: &Graph<u64>, start: usize){
     //visit(&gg,v,visited.as_mut_slice(),&mut q); 
 
   }
-  
-
-
-
 
   let mut s = String::new();
   let mut cnt: u64 = 0;
@@ -86,14 +80,14 @@ fn bfs(gg: &Graph<u64>, start: usize){
   } 
 
   println!("Visited {} vertices",cnt);
-  println!("{}: [{}]",start,s);
+ // println!("{}: [{}]",start,s);
 
 }
 
 fn main(){
 
-  const NUMV: u64 = 5;
-  const NUMN: u64 = 2;
+  const NUMV: u64 = 500;
+  const NUMN: u64 = 5;
   const VALRNG: u64 = 2000000;
 
   let mut rng = rand::thread_rng();
@@ -115,7 +109,7 @@ fn main(){
   
   println!("Graph Constructed.");
 
-  gg.print();
+  //gg.print();
 
   println!("Traversing...");
 
