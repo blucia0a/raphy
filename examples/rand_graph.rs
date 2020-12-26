@@ -26,15 +26,21 @@ fn main(){
 
   /*edges per vertex*/
   const NUME: usize = 10;
+  
+  const MAX_WEIGHT: usize = 1000;
 
   for i in 0..NUMV { 
+
     for _ in 0..NUME {
   
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,NUMV) as u64);
+      let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,MAX_WEIGHT) as u64);
+
       println!("{} {} {}",edge.0,edge.1,edge.2);
+
       el.push(edge);
 
     }
+
   }
   
   let gg = Graph::new(NUMV,el);
