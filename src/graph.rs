@@ -10,11 +10,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-//use crate::VtxTrait;
-//use crate::vertex::Vertex;
 
-/*TODO: Need to add in a vertex property array 
-        separate from the graph structure arrays*/
 #[derive(Debug)]
 pub struct Graph {
   //vprop: Vec< Box<T> >,
@@ -31,10 +27,10 @@ impl Graph {
   /*(u,v) -> weight*/
   pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> Graph{
 
-    let mut ncnt = Vec::with_capacity(numv);
-    for i in 0..numv {
+    let mut ncnt = Vec::new();
+    for _ in 0..numv {
 
-      ncnt[i] = 0;
+      ncnt.push(0);
 
     }
     
@@ -53,17 +49,32 @@ impl Graph {
 
       v: numv,
       e: el.len(),
-      offsets: Vec::with_capacity(numv), 
-      neighbs: Vec::with_capacity(el.len()) 
+      offsets: Vec::new(),
+      neighbs: Vec::new()
+      /*offsets: Vec::with_capacity(numv), 
+      neighbs: Vec::with_capacity(el.len()) */
 
     };
- 
+
+
+    /*|0,3,5,6,9|
+      |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
+    */
     /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-    g.offsets[0] = 0; 
+    let mut work_offsets = Vec::new();
+    for _ in 0..numv {
+      work_offsets.push(0);
+      g.offsets.push(0);
+    }
+
+    for _ in 0..el.len(){
+      g.neighbs.push((0,0,));
+    }
+
     for i in 1..ncnt.len() {
 
       g.offsets[i] = g.offsets[i-1] + ncnt[i-1];
-
+      work_offsets[i] = g.offsets[i];
     }
  
     /*Populate the neighbor array based on the counts*/ 
@@ -72,7 +83,17 @@ impl Graph {
       match *edge {
 
         /*use offsets array to fill edges into the neighbs array*/
-        (v0,v1,weight) => {  }
+        (v0,v1,weight) => {  
+
+	  /*The vertex of the index increments with each adjacency until
+           * hitting the base index of the next vertex*/
+          let cur_ind = work_offsets[v0];
+          work_offsets[v0] = work_offsets[v0] + 1; 
+
+          /*Install the vertex into the CSR*/
+          g.neighbs[cur_ind] = (v1,weight); 
+
+        }
 
       }
 
@@ -82,5 +103,44 @@ impl Graph {
     g
 
   } 
+
+  pub fn print(&self){
+
+    for ei in self.offsets[0]..self.offsets[1] {
+
+      let e = self.neighbs[ei];
+      match e{
+
+        (v1,weight) => {
+
+          println!("0 {} {}",v1,weight);   
+
+        }
+
+      }
+
+    }
+
+
+    for i in 0..self.offsets.len()-1 {
+
+      for ei in self.offsets[i]..self.offsets[i+1] {
+
+        let e = self.neighbs[ei];
+        match e{
+
+          (v1,weight) => {
+
+            println!("{} {} {}",i,v1,weight);   
+
+          }
+
+        }
+
+      }
+
+    }
+
+  }
 
 }/*impl Graph*/

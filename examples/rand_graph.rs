@@ -20,21 +20,24 @@ use raphy::graph::Graph;
 fn main(){
 
   let mut rng = rand::thread_rng();
+  let mut el = Vec::new();
+ 
+  const NUMV: usize = 100;
 
-  let mut gg: Graph<u64> = Graph::new();
+  /*edges per vertex*/
+  const NUME: usize = 10;
 
-  for i in 0..10 {
-
-    gg.add_vtx( i, rng.gen_range(0,2000000) as u64 );
-
-    let jb = rng.gen_range(0,5);
-    for _ in 0..jb {
-      
-      gg.add_edge( i, rng.gen_range(0,10) as u64 ); 
+  for i in 0..NUMV { 
+    for _ in 0..NUME {
+  
+      let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,NUMV) as u64);
+      println!("{} {} {}",edge.0,edge.1,edge.2);
+      el.push(edge);
 
     }
-
   }
+  
+  let gg = Graph::new(NUMV,el);
   gg.print();
 
 }
