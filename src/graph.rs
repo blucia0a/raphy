@@ -13,7 +13,7 @@ limitations under the License.
 
 #[derive(Debug)]
 pub struct CSR{
-  //vprop: Vec< Box<T> >,
+  vtxprop: Vec< f64 >,
   v: usize,
   e: usize,
   offsets: Vec< usize >,
@@ -22,7 +22,7 @@ pub struct CSR{
 
 impl CSR{
 
-  /*Take an edge list in and produce a Graph out*/
+  /*Take an edge list in and produce a CSR out*/
   /*(u,v) -> weight*/
   pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> CSR{
 
@@ -49,9 +49,8 @@ impl CSR{
       v: numv,
       e: el.len(),
       offsets: Vec::new(),
-      neighbs: Vec::new()
-      /*offsets: Vec::with_capacity(numv), 
-      neighbs: Vec::with_capacity(el.len()) */
+      neighbs: Vec::new(),
+      vtxprop: Vec::new()
 
     };
 
@@ -64,6 +63,7 @@ impl CSR{
     for _ in 0..numv {
       work_offsets.push(0);
       g.offsets.push(0);
+      g.vtxprop.push(0.0);
     }
 
     for _ in 0..el.len(){
@@ -103,6 +103,77 @@ impl CSR{
 
   } 
 
+  pub fn page_rank(&mut self){
+
+    let iters = 5;
+    let d: f64 = 0.85;
+    let init_val: f64 = 1.0 / (self.v as f64);
+
+    /*Borrow vtxprop as a slice here to indicate that its size
+      won't change, but as &mut because we'll be updating its entries*/
+    let p = &mut self.vtxprop;
+    let mut wk_pvec = Vec::new();
+    for i in 0..self.v {
+
+      p[i] = init_val;
+      wk_pvec.push(init_val);
+
+    }
+    let wk_p = &mut wk_pvec;
+
+    for _ in 0..iters{
+
+      /*Iterate over the vertices in the offsets array*/
+      let len = self.v;
+      for i in 0..len {
+  
+        /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
+        let i_start = self.offsets[i];
+        let i_end = match i {
+          i if i == len-1 => self.e,
+          _ => self.offsets[i+1]
+        };
+
+        /*Number of neighbs for this vertex*/
+        let num_neighbs: f64 = i_end as f64 - i_start as f64;
+
+        /*Initial damping factor base of update*/ 
+
+        let mut n_upd: f64 = 0.0;
+        /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
+        for ei in i_start..i_end {
+  
+          let e = self.neighbs[ei];
+          match e{
+  
+            (v1,_) => {
+ 
+              n_upd = n_upd + p[v1] / num_neighbs;
+ 
+            }
+  
+          }
+  
+        }
+
+        wk_p[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
+  
+      }
+
+      /*TODO: Inefficient - swap from work buffer to actual buffer
+        should double buffer by reference instead
+      */
+      for i in 0..len {
+        p[i] = wk_p[i];
+      }
+
+    }
+
+    for vi in 0..p.len() {
+      println!("{} {}",vi,p[vi]);
+    }
+
+  } 
 
   pub fn read_only_traversal(&self,f: impl Fn(usize,usize,u64) -> ()){
 
