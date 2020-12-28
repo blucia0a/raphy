@@ -22,20 +22,19 @@ fn main(){
   let mut rng = rand::thread_rng();
   let mut el = Vec::new();
  
-  const NUMV: usize = 100;
+  const NUMV: usize = 100000;
 
-  /*edges per vertex*/
-  const NUME: usize = 10;
-  
+  const MAX_E: usize = 100;
+
   const MAX_WEIGHT: usize = 1000;
 
   for i in 0..NUMV { 
 
-    for _ in 0..NUME {
+    /*edges per vertex*/
+    let num_e: usize = rng.gen_range(0,MAX_E) as usize;
+    for _ in 0..num_e{
   
       let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,MAX_WEIGHT) as u64);
-
-      println!("{} {} {}",edge.0,edge.1,edge.2);
 
       el.push(edge);
 
@@ -43,7 +42,8 @@ fn main(){
 
   }
   
-  let csr = CSR::new(NUMV,el);
-  csr.ReadOnlyTraversal(|v0,v1,w| println!("{} {} {}",v0,v1,w));
+  let mut csr = CSR::new(NUMV,el);
+  /*csr.read_only_traversal(|v0,v1,w| println!("{} {} {}",v0,v1,w));*/
+  csr.page_rank();
 
 }
