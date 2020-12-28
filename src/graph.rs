@@ -105,26 +105,22 @@ impl CSR{
 
   pub fn page_rank(&mut self){
 
-    let iters = 5;
+    let len = self.v;
+    let iters = 100;
     let d: f64 = 0.85;
-    let init_val: f64 = 1.0 / (self.v as f64);
+    let init_val: f64 = 1.0 / (len as f64);
 
     /*Borrow vtxprop as a slice here to indicate that its size
       won't change, but as &mut because we'll be updating its entries*/
+    let mut p2_v = vec![init_val; len];
+
+    /*Double buffer swapping - start with p2_v because it has the initial values*/
     let p = &mut self.vtxprop;
-    let mut wk_pvec = Vec::new();
-    for i in 0..self.v {
+    let p2 = &mut p2_v;
+    for it in 0..iters{
 
-      p[i] = init_val;
-      wk_pvec.push(init_val);
-
-    }
-    let wk_p = &mut wk_pvec;
-
-    for _ in 0..iters{
-
-      /*Iterate over the vertices in the offsets array*/
-      let len = self.v;
+      println!("Page Rank Iteration {}",it);
+      /*Iterate over vertices*/
       for i in 0..len {
   
         /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
@@ -133,44 +129,45 @@ impl CSR{
           i if i == len-1 => self.e,
           _ => self.offsets[i+1]
         };
-
-        /*Number of neighbs for this vertex*/
         let num_neighbs: f64 = i_end as f64 - i_start as f64;
 
-        /*Initial damping factor base of update*/ 
-
-        let mut n_upd: f64 = 0.0;
         /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
+        let mut n_upd: f64 = 0.0;
         for ei in i_start..i_end {
   
           let e = self.neighbs[ei];
-          match e{
-  
-            (v1,_) => {
- 
-              n_upd = n_upd + p[v1] / num_neighbs;
- 
-            }
-  
-          }
+          match e{ (v1,_) => { 
+                if it % 2 == 0{
+                  n_upd = n_upd + p2[v1] / num_neighbs; 
+                }else{
+                  n_upd = n_upd + p[v1] / num_neighbs; 
+                }
+          } }
   
         }
 
-        wk_p[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
+        /*Update based on damping factor times identity vector + result*/
+        if it % 2 == 0{
+          p[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
+        }else{
+          p2[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
+        }
   
       }
 
-      /*TODO: Inefficient - swap from work buffer to actual buffer
-        should double buffer by reference instead
-      */
-      for i in 0..len {
-        p[i] = wk_p[i];
-      }
 
     }
 
-    for vi in 0..p.len() {
-      println!("{} {}",vi,p[vi]);
+    /*If last iteration filled the double buffer copy,
+      put output in csr vertex prop array through p*/
+    if iters % 2 != 0{
+      for i in 0..len {
+        self.vtxprop[i] = p2_v[i];
+      }
+    }
+
+    for vi in 0..self.v{
+      println!("{} {}",vi,self.vtxprop[vi]);
     }
 
   } 
