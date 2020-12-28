@@ -15,7 +15,7 @@ extern crate rand;
 use rand::Rng;
 
 extern crate raphy;
-use raphy::graph::Graph;
+use raphy::graph::CSR;
 
 fn main(){
 
@@ -43,7 +43,7 @@ fn main(){
 
   }
   
-  let gg = Graph::new(NUMV,el);
-  gg.print();
+  let csr = CSR::new(NUMV,el);
+  csr.ReadOnlyTraversal(|v0,v1,w| println!("{} {} {}",v0,v1,w));
 
 }
