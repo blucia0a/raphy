@@ -22,7 +22,7 @@ fn main(){
   let mut rng = rand::thread_rng();
   let mut el = Vec::new();
  
-  const NUMV: usize = 100000;
+  const NUMV: usize = 10000;
 
   const MAX_E: usize = 100;
 
