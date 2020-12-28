@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 #[derive(Debug)]
-pub struct Graph {
+pub struct CSR{
   //vprop: Vec< Box<T> >,
   v: usize,
   e: usize,
@@ -20,12 +20,11 @@ pub struct Graph {
   neighbs: Vec< (usize,u64) >
 }
 
-
-impl Graph {
+impl CSR{
 
   /*Take an edge list in and produce a Graph out*/
   /*(u,v) -> weight*/
-  pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> Graph{
+  pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> CSR{
 
     let mut ncnt = Vec::new();
     for _ in 0..numv {
@@ -45,7 +44,7 @@ impl Graph {
 
     }  
     
-    let mut g = Graph{ 
+    let mut g = CSR{ 
 
       v: numv,
       e: el.len(),
@@ -104,34 +103,26 @@ impl Graph {
 
   } 
 
-  pub fn print(&self){
 
-    for ei in self.offsets[0]..self.offsets[1] {
+  pub fn read_only_traversal(&self,f: impl Fn(usize,usize,u64) -> ()){
 
-      let e = self.neighbs[ei];
-      match e{
+    let len = self.offsets.len();
+    for i in 0..len {
 
-        (v1,weight) => {
+      let i_start = self.offsets[i];
+      let i_end = match i {
+        i if i == len-1 => self.neighbs.len(),
+        _ => self.offsets[i+1]
+      };
 
-          println!("0 {} {}",v1,weight);   
-
-        }
-
-      }
-
-    }
-
-
-    for i in 0..self.offsets.len()-1 {
-
-      for ei in self.offsets[i]..self.offsets[i+1] {
+      for ei in i_start..i_end {
 
         let e = self.neighbs[ei];
         match e{
 
           (v1,weight) => {
 
-            println!("{} {} {}",i,v1,weight);   
+            f(i,v1,weight);   
 
           }
 
@@ -143,4 +134,6 @@ impl Graph {
 
   }
 
-}/*impl Graph*/
+
+
+}/*impl CSR*/
