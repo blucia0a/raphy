@@ -40,7 +40,6 @@ fn main(){
   }
   
   let mut csr = CSR::new(NUMV,el);
-  csr.read_only_scan(|v0,v1| println!("{} {}",v0,v1));*/
-  csr.page_rank();
+  csr.read_only_scan(|v0,v1| println!("{},{}",v0,v1));
 
 }
