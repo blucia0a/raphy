@@ -26,16 +26,13 @@ fn main(){
 
   const MAX_E: usize = 100;
 
-  const MAX_WEIGHT: usize = 1000;
-
   for i in 0..NUMV { 
 
     /*edges per vertex*/
     let num_e: usize = rng.gen_range(0,MAX_E) as usize;
     for _ in 0..num_e{
   
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,MAX_WEIGHT) as u64);
-
+      let edge = (i as usize, rng.gen_range(0,NUMV) as usize);
       el.push(edge);
 
     }
@@ -43,7 +40,7 @@ fn main(){
   }
   
   let mut csr = CSR::new(NUMV,el);
-  /*csr.read_only_scan(|v0,v1,w| println!("{} {} {}",v0,v1,w));*/
+  csr.read_only_scan(|v0,v1| println!("{} {}",v0,v1));*/
   csr.page_rank();
 
 }

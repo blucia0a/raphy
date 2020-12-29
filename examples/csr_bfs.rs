@@ -26,15 +26,13 @@ fn main(){
 
   const MAX_E: usize = 4;
 
-  const MAX_WEIGHT: usize = 1000;
-
   for i in 0..NUMV { 
 
     /*edges per vertex*/
     let num_e: usize = rng.gen_range(0,MAX_E) as usize;
     for _ in 0..num_e{
   
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize, rng.gen_range(0,MAX_WEIGHT) as u64);
+      let edge = (i as usize, rng.gen_range(0,NUMV) as usize);
 
       el.push(edge);
 
@@ -46,7 +44,7 @@ fn main(){
 
   println!("Edge List");
   let mut edge_cnt = 0;
-  csr.read_only_scan(|v0,v1,w| {edge_cnt = edge_cnt + 1; println!("{}--{}-->{})",v0,w,v1)});
+  csr.read_only_scan(|v0,v1| {edge_cnt = edge_cnt + 1; println!("{}-->{})",v0,v1)});
   println!("Saw {} Edges",edge_cnt);
  
   println!("BFS Traversal");
