@@ -1,5 +1,7 @@
-# raphy -- Brandon Lucia -- 2020
-### A graph data structure library with multiple implementations.
+# raphy 
+## A graph data structure library with multiple implementations.
+Brandon Lucia -- 2020
+
 
 ## raphy::graph::Graph - A basic graph data structure
 Graphs have vertices that have a numeric identifier and polymorphically can
