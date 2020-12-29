@@ -32,4 +32,11 @@ Reading the example code in examples/csr_*.rs
 is the best way to learn how exactly to use these API functions.  
 
 ### TODO
-* Get rid of weights maybe?
+* Get rid of weights in CSR
+* Add edge list type to CSR
+* Add memory mapping for edge list & CSR loading and saving
+* Propagation blocking for CSR construction
+* Propagation blocking for arbitrary traversals
+* Performance comparisons vs. C implementation?
+* Kick tires with more algo impls that use the traversal routines
+
