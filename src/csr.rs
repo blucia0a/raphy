@@ -11,6 +11,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+extern crate rand;
+use rand::Rng;
 use std::fs::File;
 use std::io::{BufRead,BufReader};
 
@@ -24,6 +26,32 @@ pub struct CSR{
 }
 
 impl CSR{
+  
+
+  /// Build a random edge list
+  /// This method returns a tuple of the number of vertices seen and the edge list
+  /// el.len() is the number of edges.  
+  pub fn random_el(numv: usize, maxe: usize) -> Vec< (usize,usize) >{
+
+    let mut rng = rand::thread_rng();
+    let mut el: Vec::<(usize,usize)> = Vec::new();
+    for i in 0..numv{ 
+
+      /*edges per vertex*/
+      let num_e: usize = rng.gen_range(0,maxe) as usize;
+      for _ in 0..num_e{
+  
+        let edge = (i as usize, rng.gen_range(0,numv) as usize);
+
+        el.push(edge);
+
+      }
+
+    }
+
+    el
+
+  }
 
 
   /// Build an edge list from a file containing text describing one.

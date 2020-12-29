@@ -50,8 +50,8 @@ the csr_rand_graph example and putting its output into a file.
 
 ### TODO
 * ~~Get rid of weights in CSR~~
-* Add edge list type to CSR
-* Add random edge list generator
+* ~~Add edge list type to CSR~~ (not doing)
+* ~~Add random edge list generator~~
 * ~~Add file reading for edge list loading~~
 * Add file writing for CSR saving 
 * Add file reading for CSR loading 
