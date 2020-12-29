@@ -43,7 +43,7 @@ fn main(){
   }
   
   let mut csr = CSR::new(NUMV,el);
-  /*csr.read_only_traversal(|v0,v1,w| println!("{} {} {}",v0,v1,w));*/
+  /*csr.read_only_scan(|v0,v1,w| println!("{} {} {}",v0,v1,w));*/
   csr.page_rank();
 
 }
