@@ -22,8 +22,8 @@ pub struct CSR{
 
 impl CSR{
 
-  /*Take an edge list in and produce a CSR out*/
-  /*(u,v) -> weight*/
+  /// Take an edge list in and produce a CSR out
+  /// (u,v) -> weight
   pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> CSR{
 
     let mut ncnt = Vec::new();
@@ -103,6 +103,18 @@ impl CSR{
 
   } 
 
+  /// Get the range of offsets into the neighbs array that hold the neighbors
+  /// of vertex v
+  pub fn vtx_offset_range(&self, v: usize) -> (usize,usize){
+    (self.offsets[v],
+     match v {
+      v if v == self.v-1 => self.e,
+      _ => self.offsets[v+1]
+     })
+  }
+  
+
+  /// page_rank implementation; do not use
   pub fn page_rank(&mut self){
 
     let len = self.v;
@@ -124,11 +136,12 @@ impl CSR{
       for i in 0..len {
   
         /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-        let i_start = self.offsets[i];
-        let i_end = match i {
-          i if i == len-1 => self.e,
-          _ => self.offsets[i+1]
-        };
+        let (i_start,i_end) = (self.offsets[i],
+                               match i {
+                                 i if i == self.v-1 => self.e,
+                                 _ => self.offsets[i+1] }
+                              );
+
         let num_neighbs: f64 = i_end as f64 - i_start as f64;
 
         /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
@@ -172,18 +185,17 @@ impl CSR{
 
   } 
 
-  pub fn read_only_traversal(&self,f: impl Fn(usize,usize,u64) -> ()){
+
+  /// read_only_scan is a read only scan of all edges in the entire CSR
+  /// that accepts a Fn(usize,usize,u64) -> () to apply to each vertex
+  pub fn read_only_scan(&self, mut f: impl FnMut(usize,usize,u64) -> ()){
 
     /*Iterate over the vertices in the offsets array*/
     let len = self.offsets.len();
     for i in 0..len {
 
       /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-      let i_start = self.offsets[i];
-      let i_end = match i {
-        i if i == len-1 => self.neighbs.len(),
-        _ => self.offsets[i+1]
-      };
+      let (i_start,i_end) = self.vtx_offset_range(i);
 
       /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
       for ei in i_start..i_end {
@@ -197,6 +209,45 @@ impl CSR{
 
           }
 
+        }
+
+      }
+
+    }
+
+  }
+
+  /// bfs_traversal starts from vertex start and does a breadth first search 
+  /// traversal on the vertices, applying f, the closure passed in, to each vertex
+  pub fn bfs_traversal(&self, start: usize, mut f: impl FnMut(usize) -> ()){
+   
+    let mut visited = vec![false; self.v]; 
+    let mut q = Vec::new();
+    visited[start] = true;
+    q.push(start);
+
+    while q.len() > 0 {
+
+      let v = q.remove(0);
+
+      f(v);
+
+      let (st,en) = self.vtx_offset_range(v);
+
+      for nei in st..en {
+
+        /*Get the first element of the edge, which is the distal vertex*/
+        let ne = self.neighbs[nei].0 as usize;
+      
+        match visited[ne]{
+          false => {
+  
+            visited[ne] = true;
+            q.push(ne as usize);
+            
+          }
+          _ => ()
+  
         }
 
       }
