@@ -36,11 +36,17 @@ is the best way to learn how exactly to use these API functions.
 The format is really simple and intentionally human readable for now:
 
 v0,v1
+
 v0,v2
+
 v1,v0
+
 v1,v2
+
 v2,v0
+
 v2,v1
+
 ...
 
 The csr_rand_graph example is written with a scan closure that writes out an edge
