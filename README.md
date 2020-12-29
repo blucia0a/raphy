@@ -32,8 +32,9 @@ Reading the example code in examples/csr_*.rs
 is the best way to learn how exactly to use these API functions.  
 
 ### TODO
-* Get rid of weights in CSR
+* ~~Get rid of weights in CSR~~
 * Add edge list type to CSR
+* Add random edge list generator
 * Add memory mapping for edge list & CSR loading and saving
 * Propagation blocking for CSR construction
 * Propagation blocking for arbitrary traversals

@@ -17,14 +17,14 @@ pub struct CSR{
   v: usize,
   e: usize,
   offsets: Vec< usize >,
-  neighbs: Vec< (usize,u64) >
+  neighbs: Vec< usize >
 }
 
 impl CSR{
 
   /// Take an edge list in and produce a CSR out
-  /// (u,v) -> weight
-  pub fn new(numv: usize, ref el: Vec<(usize,usize,u64)>) -> CSR{
+  /// (u,v)
+  pub fn new(numv: usize, ref el: Vec<(usize,usize)>) -> CSR{
 
     let mut ncnt = Vec::new();
     for _ in 0..numv {
@@ -38,7 +38,7 @@ impl CSR{
 
       match *edge {
 
-        (v0,_,_) => { ncnt[v0] = ncnt[v0] + 1; }
+        (v0,_) => { ncnt[v0] = ncnt[v0] + 1; }
 
       }
 
@@ -67,7 +67,7 @@ impl CSR{
     }
 
     for _ in 0..el.len(){
-      g.neighbs.push((0,0,));
+      g.neighbs.push(0);
     }
 
     for i in 1..ncnt.len() {
@@ -82,7 +82,7 @@ impl CSR{
       match *edge {
 
         /*use offsets array to fill edges into the neighbs array*/
-        (v0,v1,weight) => {  
+        (v0,v1) => {  
 
 	  /*The vertex of the index increments with each adjacency until
            * hitting the base index of the next vertex*/
@@ -90,7 +90,7 @@ impl CSR{
           work_offsets[v0] = work_offsets[v0] + 1; 
 
           /*Install the vertex into the CSR*/
-          g.neighbs[cur_ind] = (v1,weight); 
+          g.neighbs[cur_ind] = v1; 
 
         }
 
@@ -149,7 +149,7 @@ impl CSR{
         for ei in i_start..i_end {
   
           let e = self.neighbs[ei];
-          match e{ (v1,_) => { 
+          match e{ v1 => { 
                 if it % 2 == 0{
                   n_upd = n_upd + p2[v1] / num_neighbs; 
                 }else{
@@ -188,7 +188,7 @@ impl CSR{
 
   /// read_only_scan is a read only scan of all edges in the entire CSR
   /// that accepts a Fn(usize,usize,u64) -> () to apply to each vertex
-  pub fn read_only_scan(&self, mut f: impl FnMut(usize,usize,u64) -> ()){
+  pub fn read_only_scan(&self, mut f: impl FnMut(usize,usize) -> ()){
 
     /*Iterate over the vertices in the offsets array*/
     let len = self.offsets.len();
@@ -203,9 +203,9 @@ impl CSR{
         let e = self.neighbs[ei];
         match e{
 
-          (v1,weight) => {
+          v1 => {
 
-            f(i,v1,weight);   
+            f(i,v1);   
 
           }
 
@@ -237,7 +237,7 @@ impl CSR{
       for nei in st..en {
 
         /*Get the first element of the edge, which is the distal vertex*/
-        let ne = self.neighbs[nei].0 as usize;
+        let ne = self.neighbs[nei] as usize;
       
         match visited[ne]{
           false => {
