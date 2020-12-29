@@ -11,6 +11,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use std::fs::File;
+use std::io::{BufRead,BufReader};
+
 #[derive(Debug)]
 pub struct CSR{
   vtxprop: Vec< f64 >,
@@ -21,6 +24,57 @@ pub struct CSR{
 }
 
 impl CSR{
+
+
+  /// Build an edge list from a file containing text describing one.
+  /// The file format is line oriented and human readable:
+  /// v0,v1
+  /// v0,v2
+  /// v0,v3
+  /// v0,v3
+  /// v1,v2
+  /// v1,v2
+  /// v2,v3
+  /// v3,v1
+  /// ...
+  ///
+  /// This method returns a tuple of the number of vertices seen and the edge list
+  /// el.len() is the number of edges.  
+  pub fn el_from_file(path: &str) -> (usize, Vec< (usize,usize) >){
+
+    let mut el: Vec::<(usize,usize)> = Vec::new();
+    let mut maxv: usize = 0;
+
+    let f= File::open(path);
+
+    match f {
+      Ok(file) => {
+        let reader = BufReader::new(file);
+        for line in reader.lines() {
+          let ln = line.unwrap();
+          let linesplit = ln.split(",");
+          let tup_v: Vec<&str> = linesplit.collect(); 
+
+          let v0 = tup_v[0].parse::<usize>().unwrap();
+          let v1 = tup_v[1].parse::<usize>().unwrap();
+
+          if v0 > maxv { maxv = v0 }
+          if v1 > maxv { maxv = v1 }
+           
+          el.push( (v0,v1) );
+        }
+        
+      },
+
+      _ => {
+        println!("Failed to open file {}",path);
+      }
+
+    }
+    (maxv+1,el)
+
+  }
+
 
   /// Take an edge list in and produce a CSR out
   /// (u,v)
