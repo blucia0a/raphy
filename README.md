@@ -35,19 +35,7 @@ is the best way to learn how exactly to use these API functions.
 
 The format is really simple and intentionally human readable for now:
 
-v0,v1
-
-v0,v2
-
-v1,v0
-
-v1,v2
-
-v2,v0
-
-v2,v1
-
-...
+v0,v1  \nv0,v2  \nv1,v0  \nv1,v2  \nv2,v0  \nv2,v1  \n...
 
 The csr_rand_graph example is written with a scan closure that writes out an edge
 list in the correct format.  You can create a test input file by running 
