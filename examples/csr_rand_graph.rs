@@ -12,34 +12,15 @@ limitations under the License.
 */
 
 extern crate rand;
-use rand::Rng;
 
 extern crate raphy;
 use raphy::csr::CSR;
 
 fn main(){
 
-  let mut rng = rand::thread_rng();
-  let mut el = Vec::new();
- 
-  const NUMV: usize = 10000;
-
-  const MAX_E: usize = 100;
-
-  for i in 0..NUMV { 
-
-    /*edges per vertex*/
-    let num_e: usize = rng.gen_range(0,MAX_E) as usize;
-    for _ in 0..num_e{
-  
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize);
-      el.push(edge);
-
-    }
-
-  }
-  
-  let mut csr = CSR::new(NUMV,el);
+  const NUMV: usize = 1000;
+  const MAXE: usize = 10;
+  let csr = CSR::new(NUMV,CSR::random_el(NUMV,MAXE));
   csr.read_only_scan(|v0,v1| println!("{},{}",v0,v1));
 
 }
