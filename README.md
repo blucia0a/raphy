@@ -1,5 +1,7 @@
-# raphy -- Brandon Lucia -- 2020
-### A graph data structure library with multiple implementations.
+# raphy 
+## A graph data structure library with multiple implementations.
+Brandon Lucia -- 2020
+
 
 ## raphy::graph::Graph - A basic graph data structure
 Graphs have vertices that have a numeric identifier and polymorphically can
@@ -35,12 +37,12 @@ is the best way to learn how exactly to use these API functions.
 
 The format is really simple and intentionally human readable for now:
 
-v0,v1
-v0,v2
-v1,v0
-v1,v2
-v2,v0
-v2,v1
+v0,v1<br/>
+v0,v2<br/>
+v1,v0<br/>
+v1,v2<br/>
+v2,v0<br/>
+v2,v1<br/>
 ...
 
 The csr_rand_graph example is written with a scan closure that writes out an edge
