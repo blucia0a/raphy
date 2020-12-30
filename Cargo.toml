@@ -11,3 +11,8 @@ documentation = "https://github.com/blucia0a/raphy/blob/master/README.md"
 
 [dependencies]
 rand = "0.7.0"
+criterion = "0.3"
+
+[[bench]]
+name = "csr_pagerank"
+harness = false

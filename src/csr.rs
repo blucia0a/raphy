@@ -18,11 +18,11 @@ use std::io::{BufRead,BufReader};
 
 #[derive(Debug)]
 pub struct CSR{
-  vtxprop: Vec< f64 >,
-  v: usize,
-  e: usize,
-  offsets: Vec< usize >,
-  neighbs: Vec< usize >
+  pub vtxprop: Vec< f64 >,
+  pub v: usize,
+  pub e: usize,
+  pub offsets: Vec< usize >,
+  pub neighbs: Vec< usize >
 }
 
 impl CSR{
@@ -194,79 +194,6 @@ impl CSR{
       _ => self.offsets[v+1]
      })
   }
-  
-
-  /// page_rank implementation; do not use
-  pub fn page_rank(&mut self){
-
-    let len = self.v;
-    let iters = 100;
-    let d: f64 = 0.85;
-    let init_val: f64 = 1.0 / (len as f64);
-
-    /*Borrow vtxprop as a slice here to indicate that its size
-      won't change, but as &mut because we'll be updating its entries*/
-    let mut p2_v = vec![init_val; len];
-
-    /*Double buffer swapping - start with p2_v because it has the initial values*/
-    let p = &mut self.vtxprop;
-    let p2 = &mut p2_v;
-    for it in 0..iters{
-
-      println!("Page Rank Iteration {}",it);
-      /*Iterate over vertices*/
-      for i in 0..len {
-  
-        /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-        let (i_start,i_end) = (self.offsets[i],
-                               match i {
-                                 i if i == self.v-1 => self.e,
-                                 _ => self.offsets[i+1] }
-                              );
-
-        let num_neighbs: f64 = i_end as f64 - i_start as f64;
-
-        /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
-        let mut n_upd: f64 = 0.0;
-        for ei in i_start..i_end {
-  
-          let e = self.neighbs[ei];
-          match e{ v1 => { 
-                if it % 2 == 0{
-                  n_upd = n_upd + p2[v1] / num_neighbs; 
-                }else{
-                  n_upd = n_upd + p[v1] / num_neighbs; 
-                }
-          } }
-  
-        }
-
-        /*Update based on damping factor times identity vector + result*/
-        if it % 2 == 0{
-          p[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
-        }else{
-          p2[i] = (1.0 - d) / (self.v as f64) + d * n_upd; 
-        }
-  
-      }
-
-
-    }
-
-    /*If last iteration filled the double buffer copy,
-      put output in csr vertex prop array through p*/
-    if iters % 2 != 0{
-      for i in 0..len {
-        self.vtxprop[i] = p2_v[i];
-      }
-    }
-
-    for vi in 0..self.v{
-      println!("{} {}",vi,self.vtxprop[vi]);
-    }
-
-  } 
-
 
   /// read_only_scan is a read only scan of all edges in the entire CSR
   /// that accepts a Fn(usize,usize,u64) -> () to apply to each vertex
