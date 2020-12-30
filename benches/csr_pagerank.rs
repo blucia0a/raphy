@@ -6,28 +6,35 @@ use criterion::{criterion_group, criterion_main, Criterion};
   
 pub fn pagerank(csr: &mut CSR){
 
-  let len = csr.v;
+  let numv = csr.get_v();
+  let nume = csr.get_e();
+  let offs = csr.get_offsets();
+  let neis = csr.get_neighbs();
+   
   let iters = 100;
   let d: f64 = 0.85;
-  let init_val: f64 = 1.0 / (len as f64);
-
+  let init_val: f64 = 1.0 / (numv as f64);
+  
   /*Borrow vtxprop as a slice here to indicate that its size
     won't change, but as &mut because we'll be updating its entries*/
-  let mut p2_v = vec![init_val; len];
+  let mut p_v = vec![init_val; numv];
+  let mut p2_v = vec![init_val; nume];
 
   /*Double buffer swapping - start with p2_v because it has the initial values*/
-  let p = &mut csr.vtxprop;
+  let p = &mut p_v;
   let p2 = &mut p2_v;
   for it in 0..iters{
 
+    
     /*Iterate over vertices*/
-    for i in 0..len {
+    for i in 0..numv {
   
       /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-      let (i_start,i_end) = (csr.offsets[i],
+      //let (i_start,i_end) = (csr.offsets[i],
+      let (i_start,i_end) = (offs[i],
                              match i {
-                               i if i == csr.v-1 => csr.e,
-                               _ => csr.offsets[i+1] }
+                               i if i == numv-1 => nume,
+                               _ => offs[i+1] }
                             );
 
       let num_neighbs: f64 = i_end as f64 - i_start as f64;
@@ -36,7 +43,7 @@ pub fn pagerank(csr: &mut CSR){
       let mut n_upd: f64 = 0.0;
       for ei in i_start..i_end {
   
-        let e = csr.neighbs[ei];
+        let e = neis[ei];
         match e{ v1 => { 
               if it % 2 == 0{
                 n_upd = n_upd + p2[v1] / num_neighbs; 
@@ -49,9 +56,9 @@ pub fn pagerank(csr: &mut CSR){
 
       /*Update based on damping factor times identity vector + result*/
       if it % 2 == 0{
-        p[i] = (1.0 - d) / (csr.v as f64) + d * n_upd; 
+        p[i] = (1.0 - d) / (numv as f64) + d * n_upd; 
       }else{
-        p2[i] = (1.0 - d) / (csr.v as f64) + d * n_upd; 
+        p2[i] = (1.0 - d) / (numv as f64) + d * n_upd; 
       }
   
     }
@@ -61,11 +68,12 @@ pub fn pagerank(csr: &mut CSR){
 
   /*If last iteration filled the double buffer copy,
   put output in csr vertex prop array through p*/
-  if iters % 2 != 0{
+  /*if iters % 2 != 0{
     for i in 0..len {
       csr.vtxprop[i] = p2_v[i];
     }
   }
+  */
 
   /*for vi in 0..csr.v{
     println!("{} {}",vi,csr.vtxprop[vi]);

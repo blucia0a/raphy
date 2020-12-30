@@ -18,15 +18,30 @@ use std::io::{BufRead,BufReader};
 
 #[derive(Debug)]
 pub struct CSR{
-  pub vtxprop: Vec< f64 >,
-  pub v: usize,
-  pub e: usize,
+  v: usize,
+  e: usize,
   pub offsets: Vec< usize >,
   pub neighbs: Vec< usize >
 }
 
 impl CSR{
   
+
+  pub fn get_v(&self) -> usize{
+    self.v 
+  }
+  
+  pub fn get_e(&self) -> usize{
+    self.e 
+  }
+
+  pub fn get_offsets(&self) -> &Vec<usize>{
+    &self.offsets 
+  }
+
+  pub fn get_neighbs(&self) -> &Vec<usize>{
+    &self.neighbs
+  }
 
   /// Build a random edge list
   /// This method returns a tuple of the number of vertices seen and the edge list
@@ -132,7 +147,6 @@ impl CSR{
       e: el.len(),
       offsets: Vec::new(),
       neighbs: Vec::new(),
-      vtxprop: Vec::new()
 
     };
 
@@ -145,7 +159,6 @@ impl CSR{
     for _ in 0..numv {
       work_offsets.push(0);
       g.offsets.push(0);
-      g.vtxprop.push(0.0);
     }
 
     for _ in 0..el.len(){
@@ -196,7 +209,7 @@ impl CSR{
   }
 
   /// read_only_scan is a read only scan of all edges in the entire CSR
-  /// that accepts a Fn(usize,usize,u64) -> () to apply to each vertex
+  /// that accepts a FnMut(usize,usize,u64) -> () to apply to each vertex
   pub fn read_only_scan(&self, mut f: impl FnMut(usize,usize) -> ()){
 
     /*Iterate over the vertices in the offsets array*/
