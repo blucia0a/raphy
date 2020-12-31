@@ -1,6 +1,6 @@
 [package]
 name = "raphy"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
 description = "A graph data structure library"
@@ -8,6 +8,7 @@ license = "Apache-2.0"
 homepage = "https://brandonlucia.com"
 repository = "https://github.com/blucia0a/raphy"
 documentation = "https://github.com/blucia0a/raphy/blob/master/README.md"
+readme = "README.md"
 
 [dependencies]
 rand = "0.7.0"
