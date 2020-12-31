@@ -1,8 +1,21 @@
+extern crate bit_vec;
 extern crate rand;
 extern crate raphy;
 use raphy::csr::CSR;
 use criterion::{criterion_group, criterion_main, Criterion};
+use bit_vec::BitVec;
+use rand::Rng;
 
+pub fn bfs(csr: &mut CSR){
+
+  let mut bv = BitVec::from_elem(csr.get_v(),false);
+
+  let mut rng = rand::thread_rng();
+  let start: usize = rng.gen_range(0,csr.get_v()) as usize;
+ 
+  csr.bfs_traversal(start,|v|bv.set(v,true));
+
+} 
   
 pub fn pagerank(csr: &mut CSR){
 
@@ -88,6 +101,8 @@ fn criterion_benchmark(c: &mut Criterion){
   const MAXE: usize = 10;
   let mut csr = CSR::new(NUMV,CSR::random_el(NUMV,MAXE));
   c.bench_function("PageRank CSR |V|=100000 ~50 e / v:",|b| b.iter(|| pagerank(&mut csr)));
+  
+  c.bench_function("BFS CSR |V|=100000 ~10 e / v:",|b| b.iter(|| bfs(&mut csr)));
 
 }
 

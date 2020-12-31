@@ -12,9 +12,11 @@ limitations under the License.
 */
 
 extern crate rand;
+extern crate bit_vec;
 use rand::Rng;
 use std::fs::File;
 use std::io::{BufRead,BufReader};
+use bit_vec::BitVec;
 
 #[derive(Debug)]
 pub struct CSR{
@@ -240,12 +242,15 @@ impl CSR{
   }
 
   /// bfs_traversal starts from vertex start and does a breadth first search 
-  /// traversal on the vertices, applying f, the closure passed in, to each vertex
+  /// traversal on the vertices, applying f, the closure passed in, to each
+  /// vertex
   pub fn bfs_traversal(&self, start: usize, mut f: impl FnMut(usize) -> ()){
    
-    let mut visited = vec![false; self.v]; 
+    //let mut visited = vec![false; self.v]; 
+    let mut visited = BitVec::from_elem(self.v, false);
     let mut q = Vec::new();
-    visited[start] = true;
+    
+    visited.set(start,true);//[start] = true;
     q.push(start);
 
     while q.len() > 0 {
@@ -264,7 +269,7 @@ impl CSR{
         match visited[ne]{
           false => {
   
-            visited[ne] = true;
+            visited.set(ne,true);//[ne] = true;
             q.push(ne as usize);
             
           }
@@ -277,7 +282,6 @@ impl CSR{
     }
 
   }
-
 
 
 }/*impl CSR*/

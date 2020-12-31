@@ -55,11 +55,11 @@ the csr_rand_graph example and putting its output into a file.
 * ~~Add edge list type to CSR~~ (not doing)
 * ~~Add random edge list generator~~
 * ~~Add file reading for edge list loading~~
-* Add file writing for CSR saving 
-* Add file reading for CSR loading 
-* Add memory mapping for edge list & CSR loading and saving (depends on mmap?)
-* Propagation blocking for CSR construction
-* Propagation blocking for arbitrary traversals
-* Performance comparisons vs. C implementation?
-* Kick tires with more algo impls that use the traversal routines
+* serde support for CSR 
+* serde support for EL 
+* bit-vec support for frontier and visited in BFS 
+* propagation blocking for CSR construction
+* propagation blocking for arbitrary traversals
+* ~~benchmarks for performance comparisons (vs. C implementation)~~
+* kick tires with more algo impls that use the traversal routines
 
