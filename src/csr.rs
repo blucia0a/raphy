@@ -246,11 +246,10 @@ impl CSR{
   /// vertex
   pub fn bfs_traversal(&self, start: usize, mut f: impl FnMut(usize) -> ()){
    
-    //let mut visited = vec![false; self.v]; 
     let mut visited = BitVec::from_elem(self.v, false);
     let mut q = Vec::new();
     
-    visited.set(start,true);//[start] = true;
+    visited.set(start,true);
     q.push(start);
 
     while q.len() > 0 {
@@ -269,7 +268,7 @@ impl CSR{
         match visited[ne]{
           false => {
   
-            visited.set(ne,true);//[ne] = true;
+            visited.set(ne,true);
             q.push(ne as usize);
             
           }
