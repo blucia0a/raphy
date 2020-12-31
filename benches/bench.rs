@@ -1,6 +1,8 @@
 extern crate bit_vec;
 extern crate rand;
+
 extern crate raphy;
+
 use raphy::csr::CSR;
 use criterion::{criterion_group, criterion_main, Criterion};
 use bit_vec::BitVec;
@@ -16,7 +18,6 @@ pub fn bfs(csr: &mut CSR){
   csr.bfs_traversal(start,|v|bv.set(v,true));
 
 } 
-  
 pub fn pagerank(csr: &mut CSR){
 
   let numv = csr.get_v();
@@ -32,18 +33,19 @@ pub fn pagerank(csr: &mut CSR){
     won't change, but as &mut because we'll be updating its entries*/
   let mut p_v = vec![init_val; numv];
   let mut p2_v = vec![init_val; nume];
-
+      
   /*Double buffer swapping - start with p2_v because it has the initial values*/
   let p = &mut p_v;
   let p2 = &mut p2_v;
+
   for it in 0..iters{
 
     
-    /*Iterate over vertices*/
-    for i in 0..numv {
+
+
+    for i in 0..numv {    /*Iterate over vertices*/
   
       /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-      //let (i_start,i_end) = (csr.offsets[i],
       let (i_start,i_end) = (offs[i],
                              match i {
                                i if i == numv-1 => nume,
@@ -75,7 +77,6 @@ pub fn pagerank(csr: &mut CSR){
       }
   
     }
-
 
   }
 
