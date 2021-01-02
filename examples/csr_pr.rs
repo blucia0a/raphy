@@ -18,11 +18,10 @@ use raphy::csr::CSR;
 
 fn main(){
 
-  const NUMV: usize = 1000;
-  const MAXE: usize = 10;
-  let mut csr = CSR::new(NUMV,CSR::random_el(NUMV,MAXE));
+  let (numv,el) = CSR::el_from_file("examples/in.el");
+  let mut csr = CSR::new(numv,el);
 
-  let mut vp = vec![0.0; NUMV];
+  let mut vp = vec![0.0; numv];
   vp.clone_from_slice(csr.get_vtxprop());
 
   let vf = |_v0: usize, nei: &[usize]| {
@@ -36,6 +35,7 @@ fn main(){
     sum
 
   };
+  println!("Running Traversal");
   csr.par_scan(vf);
 
 }
