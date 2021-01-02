@@ -1,12 +1,16 @@
 extern crate bit_vec;
 extern crate rand;
-
+extern crate rayon;
 extern crate raphy;
 
 use raphy::csr::CSR;
 use criterion::{criterion_group, criterion_main, Criterion};
 use bit_vec::BitVec;
 use rand::Rng;
+
+use rayon::prelude::*;
+use std::sync::RwLock;
+use std::iter;
 
 pub fn bfs(csr: &mut CSR){
 
@@ -18,7 +22,8 @@ pub fn bfs(csr: &mut CSR){
   csr.bfs_traversal(start,|v|bv.set(v,true));
 
 } 
-pub fn pagerank(csr: &mut CSR){
+
+pub fn seq_pagerank(csr: &mut CSR){
 
   let numv = csr.get_v();
   let nume = csr.get_e();
@@ -96,10 +101,74 @@ pub fn pagerank(csr: &mut CSR){
 } 
 
 
+pub fn pagerank(csr: &mut CSR){
+
+   
+  let iters = 100;
+  let numv = csr.get_v();
+  let nume = csr.get_e();
+  let offs = csr.get_offsets();
+  let neis = csr.get_neighbs();
+  let init_val: f64 = 1.0 / (numv as f64);
+  const D: f64 = 0.85;
+  
+  let mut p: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
+  let mut p2: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
+
+  for _ in 0..iters{
+
+      (0..numv).into_par_iter().for_each(|i|{ 
+
+        /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
+        let (i_start,i_end) = (offs[i],
+                               match i {
+                                     i if i == numv-1 => nume,
+                                     _ => offs[i+1] }
+                              );
+
+        let num_neighbs: f64 = i_end as f64 - i_start as f64;
+
+        /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
+        let mut n_upd: f64 = 0.0;
+        for ei in i_start..i_end {
+  
+          let v1 = neis[ei];
+          let val = p2[v1].read().unwrap();
+          n_upd = n_upd + *val / num_neighbs; 
+  
+        }
+
+        /*Update based on damping factor times identity vector + result*/
+        let mut vprop = p[i].write().unwrap();
+        *vprop = (1.0 - D) / (numv as f64) + D * n_upd; 
+
+      });
+
+      /*After each iteration's pass over edges, swap
+        the vtx prop arrays
+      */
+      for i in 0..numv { 
+
+        let mut p2w = p2[i].write().unwrap();
+        let pr = p[i].read().unwrap();
+        *p2w = *pr; 
+
+      } 
+
+  }
+
+
+  /*for vi in 0..csr.v{
+    println!("{} {}",vi,csr.vtxprop[vi]);
+  }*/
+
+} 
+
+
 fn criterion_benchmark(c: &mut Criterion){
 
-  const NUMV: usize = 100000;
-  const MAXE: usize = 10;
+  const NUMV: usize = 10000;
+  const MAXE: usize = 500;
   let mut csr = CSR::new(NUMV,CSR::random_el(NUMV,MAXE));
   c.bench_function("PageRank CSR |V|=100000 ~50 e / v:",|b| b.iter(|| pagerank(&mut csr)));
   
