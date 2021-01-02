@@ -17,17 +17,25 @@ use rand::Rng;
 use std::fs::File;
 use std::io::{BufRead,BufReader};
 use bit_vec::BitVec;
+use rayon::prelude::*;
 
 #[derive(Debug)]
 pub struct CSR{
   v: usize,
   e: usize,
+  vtxprop: Vec<f64>,
   pub offsets: Vec< usize >,
   pub neighbs: Vec< usize >
 }
 
 impl CSR{
+  pub fn get_vtxprop(&self) -> &[f64]{
+    &self.vtxprop 
+  }
   
+  pub fn get_mut_vtxprop(&mut self) -> &mut [f64]{
+    &mut self.vtxprop 
+  }
 
   pub fn get_v(&self) -> usize{
     self.v 
@@ -147,8 +155,9 @@ impl CSR{
 
       v: numv,
       e: el.len(),
-      offsets: Vec::new(),
-      neighbs: Vec::new(),
+      vtxprop: vec![0f64; numv],
+      offsets: vec![0; numv],
+      neighbs: vec![0; el.len()],
 
     };
 
@@ -157,15 +166,7 @@ impl CSR{
       |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
     */
     /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-    let mut work_offsets = Vec::new();
-    for _ in 0..numv {
-      work_offsets.push(0);
-      g.offsets.push(0);
-    }
-
-    for _ in 0..el.len(){
-      g.neighbs.push(0);
-    }
+    let mut work_offsets = vec![0; numv];
 
     for i in 1..ncnt.len() {
 
@@ -282,7 +283,34 @@ impl CSR{
 
   }
 
- 
+  pub fn par_scan(&mut self, f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync) -> (){
+
+      /*basically the number of threads to use*/
+      const NUMCHUNKS: usize = 16;
+      let chunksz: usize = self.v / NUMCHUNKS;
+      let scan_vtx_row = |(row_i,vtx_row): (usize, &mut [f64])|{ 
+
+        let row_i_base: usize = row_i * chunksz;
+        vtx_row.iter_mut()
+               .enumerate()
+               .for_each(|(ii,v): (usize, &mut f64)|{
+
+          let v0 = row_i_base + ii;
+          let (start,end) = self.vtx_offset_range(v0);
+          *v = f(v0,&self.neighbs[start..end]);
+
+        });
+
+      };
+
+      let mut vtxprop = vec![0.0; self.get_v()];
+      vtxprop.
+      par_chunks_mut(chunksz).
+      enumerate().
+      for_each(scan_vtx_row);
+      self.vtxprop.copy_from_slice(&vtxprop);
+
+  }
 
 
 }/*impl CSR*/

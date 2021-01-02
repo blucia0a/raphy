@@ -11,6 +11,7 @@ use rand::Rng;
 use rayon::prelude::*;
 use std::sync::RwLock;
 use std::iter;
+const ITERS: usize = 3;
 
 pub fn bfs(csr: &mut CSR){
 
@@ -30,7 +31,7 @@ pub fn seq_pagerank(csr: &mut CSR){
   let offs = csr.get_offsets();
   let neis = csr.get_neighbs();
    
-  let iters = 100;
+  let iters = ITERS;
   let d: f64 = 0.85;
   let init_val: f64 = 1.0 / (numv as f64);
   
@@ -104,7 +105,7 @@ pub fn seq_pagerank(csr: &mut CSR){
 pub fn pagerank(csr: &mut CSR){
 
    
-  let iters = 100;
+  let iters = ITERS;
   let numv = csr.get_v();
   let nume = csr.get_e();
   let offs = csr.get_offsets();
@@ -167,8 +168,8 @@ pub fn pagerank(csr: &mut CSR){
 
 fn criterion_benchmark(c: &mut Criterion){
 
-  const NUMV: usize = 10000;
-  const MAXE: usize = 500;
+  const NUMV: usize = 100000;
+  const MAXE: usize = 1000;
   let mut csr = CSR::new(NUMV,CSR::random_el(NUMV,MAXE));
   c.bench_function("PageRank CSR |V|=100000 ~50 e / v:",|b| b.iter(|| pagerank(&mut csr)));
   
