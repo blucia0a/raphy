@@ -18,24 +18,45 @@ use raphy::csr::CSR;
 
 fn main(){
 
+  const NUMITERS: usize = 10;
   let (numv,el) = CSR::el_from_file("examples/in.el");
   let mut csr = CSR::new(numv,el);
+  
+  let mut vpp = csr.get_mut_vtxprop();
+  for i in 0..vpp.len(){
+    vpp[i] = 1.0 / (numv as f64);
+  }
 
-  let mut vp = vec![0.0; numv];
-  vp.clone_from_slice(csr.get_vtxprop());
+  for _ in 0..NUMITERS {
 
-  let vf = |_v0: usize, nei: &[usize]| {
+    let mut vp = vec![0.0; numv];
+    vp.clone_from_slice(csr.get_vtxprop());
+  
+    /*The closure returns the value that should be stored in csr.vtxprop
+      for v0*/
+    let vf = |v0: usize, nei: &[usize]| {
+  
+      const D: f64 = 0.85;
+      let mut n_upd: f64 = 1.0 / (numv as f64);
+      let num_neighbs = nei.len();
+  
+      for v1 in nei {
+  
+        n_upd = n_upd + vp[*v1] / (num_neighbs as f64);
+  
+      }
+      (1.0 - D) / (numv as f64) + D * n_upd 
+  
+    };
+  
+    println!("Running Traversal");
+    csr.par_scan(vf);
 
-    let mut sum: f64 = 0.0;
-    for v1 in nei {
+  }
 
-      sum = sum + vp[*v1];
-
-    }
-    sum
-
-  };
-  println!("Running Traversal");
-  csr.par_scan(vf);
+  let vpp = csr.get_vtxprop();
+  for i in 0..vpp.len(){
+    println!("{} {}",i,vpp[i]);
+  }
 
 }
