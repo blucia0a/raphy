@@ -62,4 +62,4 @@ the csr_rand_graph example and putting its output into a file.
 * propagation blocking for arbitrary traversals
 * ~~benchmarks for performance comparisons (vs. C implementation)~~
 * kick tires with more algo impls that use the traversal routines
-* parallelism (sub-TODO: how?) 
+* parallel/optimize CSR construction <------ A-1 prio
