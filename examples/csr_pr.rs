@@ -22,10 +22,15 @@ fn main(){
   let (numv,el) = CSR::el_from_file("examples/in.el");
   let mut csr = CSR::new(numv,el);
   
-  let mut vpp = csr.get_mut_vtxprop();
+  let vpp = csr.get_mut_vtxprop();
   for i in 0..vpp.len(){
     vpp[i] = 1.0 / (numv as f64);
   }
+
+  csr.get_mut_vtxprop()
+     .iter_mut()
+     .for_each(|vp: &mut f64|{ *vp = 1.0 / (numv as f64) });
+     
 
   for _ in 0..NUMITERS {
 
@@ -37,14 +42,11 @@ fn main(){
     let vf = |v0: usize, nei: &[usize]| {
   
       const D: f64 = 0.85;
-      let mut n_upd: f64 = 1.0 / (numv as f64);
-      let num_neighbs = nei.len();
-  
-      for v1 in nei {
-  
-        n_upd = n_upd + vp[*v1] / (num_neighbs as f64);
-  
-      }
+      let mut n_upd: f64 = 0.0;
+
+      nei.iter()
+         .for_each(|v1|{ n_upd = n_upd + vp[*v1] / (nei.len() as f64) });  
+
       (1.0 - D) / (numv as f64) + D * n_upd 
   
     };
@@ -54,9 +56,9 @@ fn main(){
 
   }
 
-  let vpp = csr.get_vtxprop();
-  for i in 0..vpp.len(){
-    println!("{} {}",i,vpp[i]);
-  }
+  csr.get_vtxprop()
+     .iter()
+     .enumerate()
+     .for_each(|(i,v)|{ println!("{} {}",i,v) } );
 
 }
