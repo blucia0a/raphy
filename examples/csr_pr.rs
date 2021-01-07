@@ -22,15 +22,9 @@ fn main(){
   let (numv,el) = CSR::el_from_file("examples/in.el");
   let mut csr = CSR::new(numv,el);
   
-  let vpp = csr.get_mut_vtxprop();
-  for i in 0..vpp.len(){
-    vpp[i] = 1.0 / (numv as f64);
-  }
-
   csr.get_mut_vtxprop()
      .iter_mut()
      .for_each(|vp: &mut f64|{ *vp = 1.0 / (numv as f64) });
-     
 
   for _ in 0..NUMITERS {
 
@@ -39,7 +33,7 @@ fn main(){
   
     /*The closure returns the value that should be stored in csr.vtxprop
       for v0*/
-    let vf = |v0: usize, nei: &[usize]| {
+    let vf = |_v0: usize, nei: &[usize]| {
   
       const D: f64 = 0.85;
       let mut n_upd: f64 = 0.0;
