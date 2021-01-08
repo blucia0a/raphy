@@ -17,6 +17,7 @@ use rand::Rng;
 use std::fs::File;
 use std::io::{BufRead,BufReader};
 use bit_vec::BitVec;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use rayon::prelude::*;
 
 #[derive(Debug)]
@@ -24,8 +25,8 @@ pub struct CSR{
   v: usize,
   e: usize,
   vtxprop: Vec<f64>,
-  pub offsets: Vec< usize >,
-  pub neighbs: Vec< usize >
+  offsets: Vec< usize >,
+  neighbs: Vec< usize >
 }
 
 impl CSR{
@@ -133,23 +134,20 @@ impl CSR{
   /// (u,v)
   pub fn new(numv: usize, ref el: Vec<(usize,usize)>) -> CSR{
 
+    //println!("starting new");
+    const NUMCHUNKS: usize = 16;
+    let chunksz: usize = numv / NUMCHUNKS;
     let mut ncnt = Vec::new();
-    for _ in 0..numv {
-
-      ncnt.push(0);
-
-    }
+    for _ in 0..numv { ncnt.push( AtomicUsize::new(0) ); }
     
+    //println!("init vtxcount");
     /*Count up the number of neighbors that each vertex has */ 
-    for edge in el {
-
-      match *edge {
-
-        (v0,_) => { ncnt[v0] = ncnt[v0] + 1; }
-
-      }
-
-    }  
+    el.par_chunks(chunksz)
+      .for_each(|cnk| { 
+                 cnk.iter()
+                    .for_each(|e|{ ncnt[(*e).0].fetch_add(1,Ordering::SeqCst);});
+                      } 
+               );
     
     let mut g = CSR{ 
 
@@ -157,45 +155,48 @@ impl CSR{
       e: el.len(),
       vtxprop: vec![0f64; numv],
       offsets: vec![0; numv],
-      neighbs: vec![0; el.len()],
+      neighbs: vec![0; el.len()]
 
     };
 
-
+    
     /*|0,3,5,6,9|
       |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
     */
     /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-    let mut work_offsets = vec![0; numv];
-
+    /*Not sure how to make this a foreach loop...*/
+    //println!("init offsets and work offsets");
+    let mut work_offsets = vec![0;numv];
     for i in 1..ncnt.len() {
 
-      g.offsets[i] = g.offsets[i-1] + ncnt[i-1];
+      g.offsets[i] = g.offsets[i-1] + ncnt[i-1].load(Ordering::Relaxed);
       work_offsets[i] = g.offsets[i];
     }
- 
+
+
+    /*Not sure how to parallelize this part of the code...*/ 
+    //println!("neighpop");
     /*Populate the neighbor array based on the counts*/ 
-    for edge in el {
+    for edge in el{
 
       match *edge {
-
+  
         /*use offsets array to fill edges into the neighbs array*/
         (v0,v1) => {  
-
-	  /*The vertex of the index increments with each adjacency until
-           * hitting the base index of the next vertex*/
+  
+  	  /*The vertex of the index increments with each adjacency until
+          * hitting the base index of the next vertex*/
           let cur_ind = work_offsets[v0];
           work_offsets[v0] = work_offsets[v0] + 1; 
-
-          /*Install the vertex into the CSR*/
-          g.neighbs[cur_ind] = v1; 
-
+          g.neighbs[cur_ind] = v1;
+  
         }
-
+  
       }
-
-    }  
-
+  
+    }
+   
+ 
     /*return the graph, g*/
     g
 
