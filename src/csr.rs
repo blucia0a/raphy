@@ -144,7 +144,8 @@ impl CSR{
   pub fn new(numv: usize, ref el: Vec<(usize,usize)>) -> CSR{
 
     const NUMCHUNKS: usize = 16;
-    let chunksz: usize = numv / NUMCHUNKS;
+    let chunksz: usize = if numv > NUMCHUNKS {numv / NUMCHUNKS} else {1};
+
     let mut ncnt = Vec::new();
     for _ in 0..numv { ncnt.push( AtomicUsize::new(0) ); }
 
@@ -300,7 +301,7 @@ impl CSR{
 
       /*basically the number of threads to use*/
       const NUMCHUNKS: usize = 16;
-      let chunksz: usize = self.v / NUMCHUNKS;
+      let chunksz: usize = if self.v > NUMCHUNKS {self.v / NUMCHUNKS} else {1};
       let scan_vtx_row = |(row_i,vtx_row): (usize, &mut [f64])|{ 
 
         let row_i_base: usize = row_i * chunksz;
