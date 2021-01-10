@@ -1,6 +1,6 @@
 [package]
 name = "raphy"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
 description = "A graph data structure library"
@@ -15,6 +15,7 @@ rand = "0.7.0"
 criterion = "0.3"
 bit-vec = "0.6"
 rayon = "1.5.0"
+csv = "1.1"
 
 [[bench]]
 name = "bench"

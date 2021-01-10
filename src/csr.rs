@@ -11,11 +11,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+extern crate csv;
 extern crate rand;
 extern crate bit_vec;
 use rand::Rng;
 use std::fs::File;
-use std::io::{BufRead,BufReader};
+/*use std::io::{BufRead,BufReader};*/
 use bit_vec::BitVec;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use rayon::prelude::*;
@@ -102,32 +103,37 @@ impl CSR{
 
     let f= File::open(path);
 
+
+
     match f {
+
       Ok(file) => {
-        let reader = BufReader::new(file);
-        for line in reader.lines() {
-          let ln = line.unwrap();
-          let linesplit = ln.split(",");
-          let tup_v: Vec<&str> = linesplit.collect(); 
 
-          let v0 = tup_v[0].parse::<usize>().unwrap();
-          let v1 = tup_v[1].parse::<usize>().unwrap();
+        let mut rdr = csv::ReaderBuilder::new()
+          .has_headers(false)
+          .from_reader(file);
+        for result in rdr.records() {
+          match result { 
+            Ok(p) => {
 
-          if v0 > maxv { maxv = v0 }
-          if v1 > maxv { maxv = v1 }
-           
-          el.push( (v0,v1) );
+              let v0 = p.get(0).unwrap().parse::<usize>().unwrap();
+              let v1 = p.get(1).unwrap().parse::<usize>().unwrap();
+              if v0 > maxv { maxv = v0 }
+              if v1 > maxv { maxv = v1 }
+              el.push( (v0,v1) );
+
+            },
+            _ => { eprintln!("Failed to parse file"); }
+          }
         }
-        
       },
-
       _ => {
 
         eprintln!("Failed to open file {}",path);
 
       }
-
     }
+
     (maxv+1,el)
 
   }
