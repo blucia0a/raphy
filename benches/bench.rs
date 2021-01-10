@@ -113,8 +113,8 @@ pub fn pagerank(csr: &mut CSR){
   let init_val: f64 = 1.0 / (numv as f64);
   const D: f64 = 0.85;
   
-  let mut p: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
-  let mut p2: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
+  let p: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
+  let p2: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(init_val)).take(numv).collect();
 
   for _ in 0..iters{
 
