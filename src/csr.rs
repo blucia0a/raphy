@@ -122,7 +122,9 @@ impl CSR{
       },
 
       _ => {
-        println!("Failed to open file {}",path);
+
+        eprintln!("Failed to open file {}",path);
+
       }
 
     }
@@ -135,14 +137,12 @@ impl CSR{
   /// (u,v)
   pub fn new(numv: usize, ref el: Vec<(usize,usize)>) -> CSR{
 
-    //println!("starting new");
     const NUMCHUNKS: usize = 16;
     let chunksz: usize = numv / NUMCHUNKS;
     let mut ncnt = Vec::new();
     for _ in 0..numv { ncnt.push( AtomicUsize::new(0) ); }
 
     
-    println!("init vtxcount");
     /*Count up the number of neighbors that each vertex has */ 
     el.par_chunks(chunksz)
       .for_each(|cnk| { 
@@ -151,47 +151,38 @@ impl CSR{
                       } 
                );
 
-    let mut sum = 0; 
-    ncnt.iter().for_each(|n|{sum = sum+n.load(Ordering::SeqCst);}); 
 
-    println!("ncnt len = {}, ncnt sum = {}", ncnt.len(),sum); 
+    
+    let mut work_offsets = Vec::new();
+    work_offsets.push( AtomicUsize::new(0) ); 
+
     let mut g = CSR{ 
 
       v: numv,
       e: el.len(),
       vtxprop: vec![0f64; numv],
       offsets: vec![0; numv],
-      neighbs: Vec::new() 
+      neighbs: vec![0; el.len()]
 
     };
 
-    
-    /*|0,3,5,6,9|
+    /* CSR Structure e.g.,
+      |0,3,5,6,9|
       |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
     */
     /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-    /*Not sure how to make this a foreach loop...*/
-    println!("init offsets and work offsets");
-    //let mut work_offsets = vec![0;numv];
-    let mut work_offsets = Vec::new();
-    work_offsets.push( AtomicUsize::new(0) ); 
-
     for i in 1..ncnt.len() {
 
       g.offsets[i] = g.offsets[i-1] + ncnt[i-1].load(Ordering::SeqCst);
-      //work_offsets[i] = g.offsets[i];
       work_offsets.push( AtomicUsize::new(g.offsets[i]) );
 
     }
 
-
-    /*Not sure how to parallelize this part of the code...*/ 
-    println!("neighpop");
-    /*Populate the neighbor array based on the counts*/ 
-
+    /*Temporary synchronized edge list array*/
     let mut nbs = Vec::new();
     for _ in 0..el.len(){ nbs.push( AtomicUsize::new(0) ); }
 
+    /*Populate the neighbor array based on the counts*/ 
     el.par_chunks(chunksz)
       .for_each(|cnk|{
                  cnk.iter().for_each(|edge|{
@@ -199,40 +190,19 @@ impl CSR{
                    match *edge {
                      (v0,v1) => {  
                        let cur_ind = work_offsets[v0].fetch_add(1,Ordering::SeqCst);
-                       //work_offsets[v0] = work_offsets[v0] + 1;
-                       //println!("storing {} in neighb of {} at ind {}",v1,v0,cur_ind);
                        nbs[cur_ind].store(v1,Ordering::Relaxed);
                      }
                    }
                  });
                });
 
-     
-    println!("done?");
-    for i in 0..el.len(){ g.neighbs.push( nbs[i].load(Ordering::Relaxed) ) }
-    println!("done!");
-/*
-    for edge in el{
+    g.neighbs.par_chunks_mut(chunksz)
+             .for_each(|cnk|{
+             cnk.iter_mut()
+                .enumerate()
+                .for_each(|(i,e)|{ *e = nbs[i].load(Ordering::Relaxed); }); 
+             });
 
-      match *edge {
-  
-        /*use offsets array to fill edges into the neighbs array*/
-        (v0,v1) => {  
-  
-  	  /*The vertex of the index increments with each adjacency until
-          * hitting the base index of the next vertex*/
-          let cur_ind = work_offsets[v0];
-          work_offsets[v0] = work_offsets[v0] + 1; 
-          g.set_neighb(cur_ind,v1); 
-          /*g.neighbs[cur_ind] = v1;*/
-  
-        }
-  
-      }
-  
-    }
-*/   
- 
     /*return the graph, g*/
     g
 
