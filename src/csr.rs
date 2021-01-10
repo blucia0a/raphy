@@ -37,7 +37,7 @@ impl CSR{
   pub fn get_mut_vtxprop(&mut self) -> &mut [f64]{
     &mut self.vtxprop 
   }
-
+  
   pub fn get_v(&self) -> usize{
     self.v 
   }
@@ -50,9 +50,10 @@ impl CSR{
     &self.offsets 
   }
 
-  pub fn get_neighbs(&self) -> &Vec<usize>{
+  pub fn get_neighbs(&self) -> &[usize]{
     &self.neighbs
   }
+
 
   /// Build a random edge list
   /// This method returns a tuple of the number of vertices seen and the edge list
@@ -139,8 +140,9 @@ impl CSR{
     let chunksz: usize = numv / NUMCHUNKS;
     let mut ncnt = Vec::new();
     for _ in 0..numv { ncnt.push( AtomicUsize::new(0) ); }
+
     
-    //println!("init vtxcount");
+    println!("init vtxcount");
     /*Count up the number of neighbors that each vertex has */ 
     el.par_chunks(chunksz)
       .for_each(|cnk| { 
@@ -148,14 +150,18 @@ impl CSR{
                     .for_each(|e|{ ncnt[(*e).0].fetch_add(1,Ordering::SeqCst);});
                       } 
                );
-    
+
+    let mut sum = 0; 
+    ncnt.iter().for_each(|n|{sum = sum+n.load(Ordering::SeqCst);}); 
+
+    println!("ncnt len = {}, ncnt sum = {}", ncnt.len(),sum); 
     let mut g = CSR{ 
 
       v: numv,
       e: el.len(),
       vtxprop: vec![0f64; numv],
       offsets: vec![0; numv],
-      neighbs: vec![0; el.len()]
+      neighbs: Vec::new() 
 
     };
 
@@ -165,18 +171,47 @@ impl CSR{
     */
     /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
     /*Not sure how to make this a foreach loop...*/
-    //println!("init offsets and work offsets");
-    let mut work_offsets = vec![0;numv];
+    println!("init offsets and work offsets");
+    //let mut work_offsets = vec![0;numv];
+    let mut work_offsets = Vec::new();
+    work_offsets.push( AtomicUsize::new(0) ); 
+
     for i in 1..ncnt.len() {
 
-      g.offsets[i] = g.offsets[i-1] + ncnt[i-1].load(Ordering::Relaxed);
-      work_offsets[i] = g.offsets[i];
+      g.offsets[i] = g.offsets[i-1] + ncnt[i-1].load(Ordering::SeqCst);
+      //work_offsets[i] = g.offsets[i];
+      work_offsets.push( AtomicUsize::new(g.offsets[i]) );
+
     }
 
 
     /*Not sure how to parallelize this part of the code...*/ 
-    //println!("neighpop");
+    println!("neighpop");
     /*Populate the neighbor array based on the counts*/ 
+
+    let mut nbs = Vec::new();
+    for _ in 0..el.len(){ nbs.push( AtomicUsize::new(0) ); }
+
+    el.par_chunks(chunksz)
+      .for_each(|cnk|{
+                 cnk.iter().for_each(|edge|{
+
+                   match *edge {
+                     (v0,v1) => {  
+                       let cur_ind = work_offsets[v0].fetch_add(1,Ordering::SeqCst);
+                       //work_offsets[v0] = work_offsets[v0] + 1;
+                       //println!("storing {} in neighb of {} at ind {}",v1,v0,cur_ind);
+                       nbs[cur_ind].store(v1,Ordering::Relaxed);
+                     }
+                   }
+                 });
+               });
+
+     
+    println!("done?");
+    for i in 0..el.len(){ g.neighbs.push( nbs[i].load(Ordering::Relaxed) ) }
+    println!("done!");
+/*
     for edge in el{
 
       match *edge {
@@ -188,14 +223,15 @@ impl CSR{
           * hitting the base index of the next vertex*/
           let cur_ind = work_offsets[v0];
           work_offsets[v0] = work_offsets[v0] + 1; 
-          g.neighbs[cur_ind] = v1;
+          g.set_neighb(cur_ind,v1); 
+          /*g.neighbs[cur_ind] = v1;*/
   
         }
   
       }
   
     }
-   
+*/   
  
     /*return the graph, g*/
     g
