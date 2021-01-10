@@ -204,10 +204,11 @@ impl CSR{
                });
 
     g.neighbs.par_chunks_mut(chunksz)
-             .for_each(|cnk|{
+             .enumerate()
+             .for_each(|(chunkbase,cnk)|{
              cnk.iter_mut()
                 .enumerate()
-                .for_each(|(i,e)|{ *e = nbs[i].load(Ordering::Relaxed); }); 
+                .for_each(|(i,e)|{ *e = nbs[chunkbase + i].load(Ordering::Relaxed); }); 
              });
 
     /*return the graph, g*/
@@ -235,7 +236,6 @@ impl CSR{
 
       /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
       let (i_start,i_end) = self.vtx_offset_range(i);
-
       /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
       for ei in i_start..i_end {
 

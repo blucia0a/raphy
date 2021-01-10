@@ -44,7 +44,7 @@ fn main(){
 
   println!("Edge List");
   let mut edge_cnt = 0;
-  csr.read_only_scan(|v0,v1| {edge_cnt = edge_cnt + 1; println!("{}-->{})",v0,v1)});
+  csr.read_only_scan(|v0,v1| {edge_cnt = edge_cnt + 1; println!("{}-->{}",v0,v1)});
   println!("Saw {} Edges",edge_cnt);
  
   println!("BFS Traversal");
