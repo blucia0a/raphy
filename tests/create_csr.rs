@@ -55,11 +55,6 @@ fn test_csr_build(){
   csr.bfs_traversal(start_v,|v| a.push(v));
   csr2.bfs_traversal(start_v,|v| b.push(v));
 
-  /*quick element-wise vector comparison hack taken from: 
-    https://stackoverflow.com/questions/29504514/
-    whats-the-best-way-to-compare-2-vectors-or-strings-element-by-element
-  */
-  let matching = a.iter().zip(b.iter()).filter(|&(a, b)| a == b).count();
-  assert!(matching == a.len() && matching == b.len());
+  assert!(a.len() == b.len(),"Comparing length of BFS result generated vs. written to and loaded from file: {} != {}",a.len(),b.len());
  
 }
