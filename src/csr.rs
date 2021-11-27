@@ -146,17 +146,30 @@ impl CSR{
     const NUMCHUNKS: usize = 16;
     let chunksz: usize = if numv > NUMCHUNKS {numv / NUMCHUNKS} else {1};
 
+    /*TODO: Parameter*/
+    let numbins = 16;
+
     let mut ncnt = Vec::new();
     for _ in 0..numv { ncnt.push( AtomicUsize::new(0) ); }
 
     
     /*Count up the number of neighbors that each vertex has */ 
-    el.par_chunks(chunksz)
+    el.par_chunks(chunksz) 
       .for_each(|cnk| { 
-                 cnk.iter()
-                    .for_each(|e|{ ncnt[(*e).0].fetch_add(1,Ordering::SeqCst);});
-                      } 
-               );
+
+        /*Per-thread bin structure*/
+        let mut bins = Vec::new();
+        for _ in 0..numbins { bins.push( Vec::<&(usize,usize)>::new() ); } 
+
+        /*iterate over chunk, push edges to bins*/ 
+        cnk.iter().for_each(|e|{ bins[(e).0 % 16].push( e ); });
+     
+        bins.iter().for_each(|b|{
+          b.iter().for_each(|e|{
+            ncnt[(e).0].fetch_add(1,Ordering::SeqCst);
+          });
+        });
+       });
 
 
     
@@ -192,23 +205,22 @@ impl CSR{
     /*Populate the neighbor array based on the counts*/ 
     el.par_chunks(chunksz)
       .for_each(|cnk|{
-                 cnk.iter().for_each(|edge|{
-
-                   match *edge {
-                     (v0,v1) => {  
-                       let cur_ind = work_offsets[v0].fetch_add(1,Ordering::SeqCst);
-                       nbs[cur_ind].store(v1,Ordering::Relaxed);
-                     }
-                   }
-                 });
-               });
+        cnk.iter().for_each(|edge|{
+          match *edge {
+            (v0,v1) => {  
+              let cur_ind = work_offsets[v0].fetch_add(1,Ordering::SeqCst);
+              nbs[cur_ind].store(v1,Ordering::Relaxed);
+            }
+          }
+        });
+      });
 
     g.neighbs.par_chunks_mut(chunksz)
-             .enumerate()
-             .for_each(|(chunkbase,cnk)|{
-             cnk.iter_mut()
-                .enumerate()
-                .for_each(|(i,e)|{ *e = nbs[chunkbase + i].load(Ordering::Relaxed); }); 
+      .enumerate()
+        .for_each(|(chunkbase,cnk)|{
+          cnk.iter_mut()
+            .enumerate()
+              .for_each(|(i,e)|{ *e = nbs[chunkbase + i].load(Ordering::Relaxed); }); 
              });
 
     /*return the graph, g*/
