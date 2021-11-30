@@ -18,90 +18,74 @@ extern crate raphy;
 use raphy::graph::Graph;
 use raphy::vertex::Vertex;
 
-fn visit(g: &Graph<u64>, v: &Vertex<u64>, visited: &mut [bool]){
+fn visit(g: &Graph<u64>, v: &Vertex<u64>, visited: &mut [bool]) {
+    match v {
+        Vertex::V {
+            ref id,
+            val: _,
+            ref neigh,
+        } => {
+            //println!("V: {}",*id as u64);
 
-    match v{
+            visited[*id as usize] = true;
 
-      Vertex::V{ ref id, val: _, ref neigh} => { 
+            for ne in neigh {
+                let ni: usize = **ne as usize;
 
-        //println!("V: {}",*id as u64);
+                if visited[ni] == false {
+                    //println!("\t{}",ni);
 
-        visited[*id as usize] = true;
+                    let n = g.get_vtx(ni);
 
-        for ne in neigh{
-
-          let ni: usize = **ne as usize;
-
-          if visited[ni] == false {
-
-            //println!("\t{}",ni);
-
-            let n = g.get_vtx(ni);
-
-            visit(g,n,visited);
-
-          }
-
+                    visit(g, n, visited);
+                }
+            }
         }
 
-      },
-
-      Vertex::Empty => (),
-
+        Vertex::Empty => (),
     }
-
 }
 
-fn main(){
+fn main() {
+    const NUMV: u64 = 10000;
+    const NUMN: u64 = 2000;
+    const VALRNG: u64 = 2000000;
 
-  const NUMV: u64 = 10000;
-  const NUMN: u64 = 2000;
-  const VALRNG: u64 = 2000000;
+    let mut rng = rand::thread_rng();
 
-  let mut rng = rand::thread_rng();
+    let mut gg: Graph<u64> = Graph::new();
 
-  let mut gg: Graph<u64> = Graph::new();
+    for i in 0..NUMV {
+        gg.add_vtx(i, rng.gen_range(0, VALRNG) as u64);
 
-  for i in 0..NUMV {
-
-    gg.add_vtx( i, rng.gen_range(0,VALRNG) as u64 );
-
-    let jb = rng.gen_range(0,NUMN);
-    for _ in 0..jb {
-      
-      gg.add_edge( i, rng.gen_range(0,NUMV) as u64 ); 
-
+        let jb = rng.gen_range(0, NUMN);
+        for _ in 0..jb {
+            gg.add_edge(i, rng.gen_range(0, NUMV) as u64);
+        }
     }
 
-  }
-  
-  println!("Graph Constructed. Traversing...");
+    println!("Graph Constructed. Traversing...");
 
-  let n = gg.num_vtxs();
+    let n = gg.num_vtxs();
 
-  let mut visited: Vec<bool> = Vec::new();
-  for _ in 0..n { visited.push(false) }
-
-  for i in 0..n {
-
-    let v = gg.get_vtx(i);
-
-    visit(&gg,v,visited.as_mut_slice()); 
-
-  }
-
-  let mut cnt: u64 = 0;
-  for v in visited.iter() {
-
-    match v {
-
-      true => cnt = cnt + 1,
-      false => ()
-
+    let mut visited: Vec<bool> = Vec::new();
+    for _ in 0..n {
+        visited.push(false)
     }
 
-  } 
+    for i in 0..n {
+        let v = gg.get_vtx(i);
 
-  println!("Visited {} vertices",cnt);
+        visit(&gg, v, visited.as_mut_slice());
+    }
 
+    let mut cnt: u64 = 0;
+    for v in visited.iter() {
+        match v {
+            true => cnt = cnt + 1,
+            false => (),
+        }
+    }
+
+    println!("Visited {} vertices", cnt);
 }

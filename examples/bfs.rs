@@ -18,113 +18,90 @@ extern crate raphy;
 use raphy::graph::Graph;
 use raphy::vertex::Vertex;
 
-fn bfs(gg: &Graph<u64>, start: usize){
+fn bfs(gg: &Graph<u64>, start: usize) {
+    /*Initialize visited list and worklist*/
+    let mut visited: Vec<bool> = Vec::new();
+    for _ in 0..gg.num_vtxs() {
+        visited.push(false)
+    }
+    let mut q: Vec<usize> = Vec::new();
 
-  /*Initialize visited list and worklist*/
-  let mut visited: Vec<bool> = Vec::new();
-  for _ in 0..gg.num_vtxs() { visited.push(false) }
-  let mut q: Vec<usize> = Vec::new();
+    visited[start] = true;
+    q.push(start);
 
-  visited[start] = true;
-  q.push(start);
+    /*Traverse while the worklist is not empty*/
+    while q.len() > 0 {
+        let vi = q.remove(0);
+        let v = gg.get_vtx(vi);
+        match v {
+            Vertex::V {
+                id: _,
+                val: _,
+                ref neigh,
+            } => {
+                //println!("V: {}",*id as u64);
 
-  /*Traverse while the worklist is not empty*/
-  while q.len() > 0 {
+                for ne in neigh {
+                    let ni: usize = **ne as usize;
 
-    let vi = q.remove(0);
-    let v = gg.get_vtx(vi);
-    match v{
+                    if visited[ni] == false {
+                        visited[ni as usize] = true;
+                        q.push(ni as usize);
+                    }
+                }
+            }
 
-      Vertex::V{ id: _, val: _, ref neigh} => { 
-
-        //println!("V: {}",*id as u64);
-
-        for ne in neigh{
-
-          let ni: usize = **ne as usize;
-
-          if visited[ni] == false {
-
-            visited[ni as usize] = true;
-            q.push(ni as usize);
-
-          }
-
+            Vertex::Empty => (),
         }
-
-      },
-
-      Vertex::Empty => (),
-
-    }
-    //visit(&gg,v,visited.as_mut_slice(),&mut q); 
-
-  }
-  
-
-
-
-
-  let mut s = String::new();
-  let mut cnt: u64 = 0;
-  for v in 0..visited.len() {
-
-    match visited[v] {
-
-
-      true => {
-        let ff = format!("{},",v);
-        let ffs = &ff[..];
-        s.push_str(ffs); 
-        cnt = cnt + 1;
-      },
-
-      false => ()
-
+        //visit(&gg,v,visited.as_mut_slice(),&mut q);
     }
 
-  } 
+    let mut s = String::new();
+    let mut cnt: u64 = 0;
+    for v in 0..visited.len() {
+        match visited[v] {
+            true => {
+                let ff = format!("{},", v);
+                let ffs = &ff[..];
+                s.push_str(ffs);
+                cnt = cnt + 1;
+            }
 
-  println!("Visited {} vertices",cnt);
-  println!("{}: [{}]",start,s);
+            false => (),
+        }
+    }
 
+    println!("Visited {} vertices", cnt);
+    println!("{}: [{}]", start, s);
 }
 
-fn main(){
+fn main() {
+    const NUMV: u64 = 5;
+    const NUMN: u64 = 2;
+    const VALRNG: u64 = 2000000;
 
-  const NUMV: u64 = 5;
-  const NUMN: u64 = 2;
-  const VALRNG: u64 = 2000000;
+    let mut rng = rand::thread_rng();
 
-  let mut rng = rand::thread_rng();
+    let mut gg: Graph<u64> = Graph::new();
 
-  let mut gg: Graph<u64> = Graph::new();
+    for i in 0..NUMV {
+        gg.add_vtx(i, rng.gen_range(0, VALRNG) as u64);
 
-  for i in 0..NUMV {
-
-    gg.add_vtx( i, rng.gen_range(0,VALRNG) as u64 );
-
-    let jb = rng.gen_range(0,NUMN);
-    for _ in 0..jb {
-      
-      gg.add_edge( i, rng.gen_range(0,NUMV) as u64 ); 
-
+        let jb = rng.gen_range(0, NUMN);
+        for _ in 0..jb {
+            gg.add_edge(i, rng.gen_range(0, NUMV) as u64);
+        }
     }
 
-  }
-  
-  println!("Graph Constructed.");
+    println!("Graph Constructed.");
 
-  gg.print();
+    gg.print();
 
-  println!("Traversing...");
+    println!("Traversing...");
 
-  /*Choose random start vertex id*/
-  //let start = rng.gen_range(0,NUMV) as usize;
-  for start in 0..NUMV {
-
-    bfs(&gg,start as usize);
-
-  }
-
+    /*Choose random start vertex id*/
+    //let start = rng.gen_range(0,NUMV) as usize;
+    for start in 0..NUMV {
+        bfs(&gg, start as usize);
+    }
 }

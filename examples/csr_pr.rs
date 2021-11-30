@@ -1,4 +1,3 @@
-
 /*
 Copyright 2020 Brandon Lucia <blucia@gmail.com>
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,43 +15,37 @@ extern crate rand;
 extern crate raphy;
 use raphy::csr::CSR;
 
-fn main(){
+fn main() {
+    const NUMITERS: usize = 10;
+    let (numv, el) = CSR::el_from_file("examples/in.el");
+    let mut csr = CSR::new(numv, el);
 
-  const NUMITERS: usize = 10;
-  let (numv,el) = CSR::el_from_file("examples/in.el");
-  let mut csr = CSR::new(numv,el);
-  
-  csr.get_mut_vtxprop()
-     .iter_mut()
-     .for_each(|vp: &mut f64|{ *vp = 1.0 / (numv as f64) });
+    csr.get_mut_vtxprop()
+        .iter_mut()
+        .for_each(|vp: &mut f64| *vp = 1.0 / (numv as f64));
 
-  for _ in 0..NUMITERS {
+    for _ in 0..NUMITERS {
+        let mut vp = vec![0.0; numv];
+        vp.clone_from_slice(csr.get_vtxprop());
 
-    let mut vp = vec![0.0; numv];
-    vp.clone_from_slice(csr.get_vtxprop());
-  
-    /*The closure returns the value that should be stored in csr.vtxprop
-      for v0*/
-    let vf = |_v0: usize, nei: &[usize]| {
-  
-      const D: f64 = 0.85;
-      let mut n_upd: f64 = 0.0;
+        /*The closure returns the value that should be stored in csr.vtxprop
+        for v0*/
+        let vf = |_v0: usize, nei: &[usize]| {
+            const D: f64 = 0.85;
+            let mut n_upd: f64 = 0.0;
 
-      nei.iter()
-         .for_each(|v1|{ n_upd = n_upd + vp[*v1] / (nei.len() as f64) });  
+            nei.iter()
+                .for_each(|v1| n_upd = n_upd + vp[*v1] / (nei.len() as f64));
 
-      (1.0 - D) / (numv as f64) + D * n_upd 
-  
-    };
-  
-    println!("Running Traversal");
-    csr.par_scan(vf);
+            (1.0 - D) / (numv as f64) + D * n_upd
+        };
 
-  }
+        println!("Running Traversal");
+        csr.par_scan(vf);
+    }
 
-  csr.get_vtxprop()
-     .iter()
-     .enumerate()
-     .for_each(|(i,v)|{ println!("{} {}",i,v) } );
-
+    csr.get_vtxprop()
+        .iter()
+        .enumerate()
+        .for_each(|(i, v)| println!("{} {}", i, v));
 }

@@ -18,55 +18,59 @@ extern crate raphy;
 use raphy::graph::Graph;
 use raphy::vertex::Vertex;
 
-fn main(){
+fn main() {
+    let mut rng = rand::thread_rng();
 
-  let mut rng = rand::thread_rng();
+    let mut gg: Graph<u64> = Graph::new();
 
-  let mut gg: Graph<u64> = Graph::new();
+    for i in 0..10 {
+        gg.add_vtx(i, rng.gen_range(0, 2000000) as u64);
 
-  for i in 0..10 {
-
-    gg.add_vtx( i, rng.gen_range(0,2000000) as u64 );
-
-    let jb = rng.gen_range(0,5);
-    for _ in 0..jb {
-      
-      gg.add_edge( i, rng.gen_range(0,10) as u64 ); 
-
-    }
-
-  }
-
-  println!("Running iterator-based print traversal over vertices");
-  for v in gg.iter() {
-    v.print();
-  }
-  
-  println!("Iterating through vertices, incrementing value, preserving rest");
-  let n = gg.num_vtxs();
-  for i in 0..n {
-
-    let v = gg.get_vtx(i);
-    let mut old_id = 0; 
-    let mut old_val = 0; 
-    let mut old_neigh = vec![];
-    match v{
-      Vertex::V{ ref id, ref val, ref neigh} => { 
-        old_id = *id; 
-        old_val = *val; 
-        for ne in neigh{
-          let new_neigh: u64 = **ne;
-          old_neigh.push(Box::new(new_neigh));
+        let jb = rng.gen_range(0, 5);
+        for _ in 0..jb {
+            gg.add_edge(i, rng.gen_range(0, 10) as u64);
         }
-      },
-      Vertex::Empty => (),
     }
-    gg.set_vtx(i, Vertex::V{ id: old_id, val: old_val + 1, neigh: old_neigh });
-    
-    gg.get_vtx(i).print();
-  }
 
-  println!("Printing whole graph (should match above)");
-  gg.print();
+    println!("Running iterator-based print traversal over vertices");
+    for v in gg.iter() {
+        v.print();
+    }
 
+    println!("Iterating through vertices, incrementing value, preserving rest");
+    let n = gg.num_vtxs();
+    for i in 0..n {
+        let v = gg.get_vtx(i);
+        let mut old_id = 0;
+        let mut old_val = 0;
+        let mut old_neigh = vec![];
+        match v {
+            Vertex::V {
+                ref id,
+                ref val,
+                ref neigh,
+            } => {
+                old_id = *id;
+                old_val = *val;
+                for ne in neigh {
+                    let new_neigh: u64 = **ne;
+                    old_neigh.push(Box::new(new_neigh));
+                }
+            }
+            Vertex::Empty => (),
+        }
+        gg.set_vtx(
+            i,
+            Vertex::V {
+                id: old_id,
+                val: old_val + 1,
+                neigh: old_neigh,
+            },
+        );
+
+        gg.get_vtx(i).print();
+    }
+
+    println!("Printing whole graph (should match above)");
+    gg.print();
 }

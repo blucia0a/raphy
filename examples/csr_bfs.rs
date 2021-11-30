@@ -17,43 +17,42 @@ use rand::Rng;
 extern crate raphy;
 use raphy::csr::CSR;
 
-fn main(){
+fn main() {
+    let mut rng = rand::thread_rng();
+    let mut el = Vec::new();
 
-  let mut rng = rand::thread_rng();
-  let mut el = Vec::new();
- 
-  const NUMV: usize = 10;
+    const NUMV: usize = 10;
 
-  const MAX_E: usize = 4;
+    const MAX_E: usize = 4;
 
-  for i in 0..NUMV { 
+    for i in 0..NUMV {
+        /*edges per vertex*/
+        let num_e: usize = rng.gen_range(0, MAX_E) as usize;
+        for _ in 0..num_e {
+            let edge = (i as usize, rng.gen_range(0, NUMV) as usize);
 
-    /*edges per vertex*/
-    let num_e: usize = rng.gen_range(0,MAX_E) as usize;
-    for _ in 0..num_e{
-  
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize);
-
-      el.push(edge);
-
+            el.push(edge);
+        }
     }
 
-  }
-  
-  let csr = CSR::new(NUMV,el);
+    let csr = CSR::new(NUMV, el);
 
-  println!("Edge List");
-  let mut edge_cnt = 0;
-  csr.read_only_scan(|v0,v1| {edge_cnt = edge_cnt + 1; println!("{}-->{}",v0,v1)});
-  println!("Saw {} Edges",edge_cnt);
- 
-  println!("BFS Traversal");
-  let bfs_vtxs = &mut Vec::new();
-  let start_v: usize = rng.gen_range(0,NUMV) as usize;
-  csr.bfs_traversal(start_v, |v| { bfs_vtxs.push(v); });
+    println!("Edge List");
+    let mut edge_cnt = 0;
+    csr.read_only_scan(|v0, v1| {
+        edge_cnt = edge_cnt + 1;
+        println!("{}-->{}", v0, v1)
+    });
+    println!("Saw {} Edges", edge_cnt);
 
-  for v in bfs_vtxs {
-    println!("{}",v);
-  }
+    println!("BFS Traversal");
+    let bfs_vtxs = &mut Vec::new();
+    let start_v: usize = rng.gen_range(0, NUMV) as usize;
+    csr.bfs_traversal(start_v, |v| {
+        bfs_vtxs.push(v);
+    });
 
+    for v in bfs_vtxs {
+        println!("{}", v);
+    }
 }

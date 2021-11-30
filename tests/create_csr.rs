@@ -13,48 +13,49 @@ limitations under the License.
 
 extern crate rand;
 extern crate raphy;
-use raphy::csr::CSR;
-use std::fs::{self,File};
-use std::io::{Write,BufWriter};
 use crate::rand::Rng;
+use raphy::csr::CSR;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
 
 #[test]
-fn test_csr_build(){
+fn test_csr_build() {
+    const NUMV: usize = 1000;
+    const MAXE: usize = 10;
+    let el = CSR::random_el(NUMV, MAXE);
 
-  const NUMV: usize = 1000;
-  const MAXE: usize = 10;
-  let el = CSR::random_el(NUMV,MAXE);
+    {
+        let file = File::create("tmp.el").unwrap();
+        let mut writer = BufWriter::new(&file);
 
-  {
+        for (v0, v1) in &el {
+            let _ = write!(&mut writer, "{},{}\n", v0, v1);
+        }
+    }
 
-    let file = File::create("tmp.el").unwrap();
-    let mut writer = BufWriter::new(&file);
+    let (numv2, el2) = CSR::el_from_file("tmp.el");
+    assert_eq!(el.len(), el2.len());
 
-    for (v0,v1) in &el {
-      let _ = write!(&mut writer,"{},{}\n",v0,v1);
-    } 
- 
-  }
-  
-  let (numv2,el2) = CSR::el_from_file("tmp.el");
-  assert_eq!(el.len(),el2.len());
+    let csr = CSR::new(NUMV, el);
+    let csr2 = CSR::new(numv2, el2);
 
-  let csr = CSR::new(NUMV,el);
-  let csr2 = CSR::new(numv2,el2);
+    let _ = fs::remove_file("tmp.el");
+    /*
+      Run a BFS on the csr built from the in-memory EL
+      and from the EL written to and loaded from the file
+      and be sure that they produce the same result
+    */
+    let mut rng = rand::thread_rng();
+    let start_v: usize = rng.gen_range(0, NUMV) as usize;
+    let mut a = Vec::new();
+    let mut b = Vec::new();
+    csr.bfs_traversal(start_v, |v| a.push(v));
+    csr2.bfs_traversal(start_v, |v| b.push(v));
 
-  let _ = fs::remove_file("tmp.el");
-  /*
-    Run a BFS on the csr built from the in-memory EL
-    and from the EL written to and loaded from the file
-    and be sure that they produce the same result
-  */
-  let mut rng = rand::thread_rng();
-  let start_v: usize = rng.gen_range(0,NUMV) as usize;
-  let mut a = Vec::new();
-  let mut b = Vec::new();
-  csr.bfs_traversal(start_v,|v| a.push(v));
-  csr2.bfs_traversal(start_v,|v| b.push(v));
-
-  assert!(a.len() == b.len(),"Comparing length of BFS result generated vs. written to and loaded from file: {} != {}",a.len(),b.len());
- 
+    assert!(
+        a.len() == b.len(),
+        "Comparing length of BFS result generated vs. written to and loaded from file: {} != {}",
+        a.len(),
+        b.len()
+    );
 }

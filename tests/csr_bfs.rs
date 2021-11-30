@@ -18,46 +18,49 @@ extern crate raphy;
 use raphy::csr::CSR;
 
 #[test]
-fn test_bfs(){
+fn test_bfs() {
+    let mut rng = rand::thread_rng();
+    let mut el = Vec::new();
 
-  let mut rng = rand::thread_rng();
-  let mut el = Vec::new();
- 
-  const NUMV: usize = 10;
+    const NUMV: usize = 10;
 
-  const MAX_E: usize = 4;
+    const MAX_E: usize = 4;
 
-  for i in 0..NUMV { 
+    for i in 0..NUMV {
+        /*edges per vertex*/
+        let num_e: usize = rng.gen_range(0, MAX_E) as usize;
+        for _ in 0..num_e {
+            let edge = (i as usize, rng.gen_range(0, NUMV) as usize);
 
-    /*edges per vertex*/
-    let num_e: usize = rng.gen_range(0,MAX_E) as usize;
-    for _ in 0..num_e{
-  
-      let edge = (i as usize, rng.gen_range(0,NUMV) as usize);
-
-      el.push(edge);
-
+            el.push(edge);
+        }
     }
 
-  }
+    let nume = el.len();
+    let csr = CSR::new(NUMV, el);
 
-  let nume = el.len();  
-  let csr = CSR::new(NUMV,el);
+    let mut edge_cnt = 0;
+    csr.read_only_scan(|_v0, _v1| {
+        edge_cnt = edge_cnt + 1;
+    });
+    assert_eq!(edge_cnt, nume);
 
-  let mut edge_cnt = 0;
-  csr.read_only_scan( |_v0,_v1| {edge_cnt = edge_cnt + 1; });
-  assert_eq!(edge_cnt, nume);
- 
-  let bfs_vtxs = &mut Vec::new();
-  let start_v: usize = rng.gen_range(0,NUMV) as usize;
-  csr.bfs_traversal(start_v, |v| { bfs_vtxs.push(v); });
+    let bfs_vtxs = &mut Vec::new();
+    let start_v: usize = rng.gen_range(0, NUMV) as usize;
+    csr.bfs_traversal(start_v, |v| {
+        bfs_vtxs.push(v);
+    });
 
-  /*Check that the traversal saw at most NUMV vertices*/
-  assert!(bfs_vtxs.len() <= NUMV);
+    /*Check that the traversal saw at most NUMV vertices*/
+    assert!(bfs_vtxs.len() <= NUMV);
 
-  /*Check that the traversal did not report any vertex id that is too high*/
-  assert!(bfs_vtxs.iter().filter(|&v| { *v >= NUMV }).collect::< Vec::<&usize> >().len() == 0);
-
-  
-
+    /*Check that the traversal did not report any vertex id that is too high*/
+    assert!(
+        bfs_vtxs
+            .iter()
+            .filter(|&v| { *v >= NUMV })
+            .collect::<Vec::<&usize>>()
+            .len()
+            == 0
+    );
 }
