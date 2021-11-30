@@ -14,11 +14,13 @@ limitations under the License.
 extern crate csv;
 extern crate rand;
 extern crate bit_vec;
+
 use rand::Rng;
 use std::fs::File;
-/*use std::io::{BufRead,BufReader};*/
 use bit_vec::BitVec;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::RwLock;
+use std::iter;
 use rayon::prelude::*;
 
 #[derive(Debug)]
@@ -339,4 +341,91 @@ impl CSR{
   }
 
 
+  pub fn update_traversal(csr: &mut CSR, iters: usize){
+
+    let mut numv = 0;
+    let mut v1: Vec< RwLock<f64> > = Vec::with_capacity(numv);
+    { 
+      let csr_i = &*csr; 
+      numv = csr_i.get_v();
+      let vtxp = csr.get_vtxprop();
+      for v in 0..numv{
+        v1[v] = RwLock::<f64>::new(vtxp[v]);
+      }
+    }
+    let mut v2: Vec< RwLock<f64> > = iter::repeat_with(|| RwLock::<f64>::new(0.0)).take(numv).collect();
+  
+    for iter in 0..iters{
+
+      let csr_i = &*csr; 
+  
+      if iter % 2 == 0 {
+  
+        let v = &v1;
+        let u = &mut v2;
+        do_update(csr_i,v,u);
+  
+      }else{
+  
+        let v = &v2;
+        let u = &mut v1;
+        do_update(csr_i,v,u);
+  
+      }
+  
+    }
+
+    {
+      let vtxp = csr.get_mut_vtxprop();
+      for i in 0..numv{
+        if iters % 2 == 0{
+          vtxp[i] = *v1[i].read().unwrap();
+        }else{
+          vtxp[i] = *v2[i].read().unwrap();
+        }
+  
+      }
+    }
+  
+  } 
+
+
 }/*impl CSR*/
+
+fn do_update(csr: &CSR, v: &Vec< RwLock<f64> >, u: &mut Vec< RwLock<f64> >){
+  
+  let numv = csr.get_v();
+  let nume = csr.get_e();
+  let offs = csr.get_offsets();
+  let neis = csr.get_neighbs();
+  const D: f64 = 0.85;
+
+  (0..numv).into_par_iter().for_each(|i|{ 
+
+    /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
+    let (i_start,i_end) = (offs[i],
+                           match i {
+                                 i if i == numv-1 => nume,
+                                 _ => offs[i+1] }
+                          );
+
+    let num_neighbs: f64 = i_end as f64 - i_start as f64;
+
+    /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
+    let mut n_upd: f64 = 0.0;
+    
+    for ei in i_start..i_end {
+
+      let v1 = neis[ei];
+      let val = v[v1].read().unwrap();
+      n_upd = n_upd + *val / num_neighbs; 
+
+    }
+
+    /*Update based on damping factor times identity vector + result*/
+    let mut vprop = u[i].write().unwrap();
+    *vprop = (1.0 - D) / (numv as f64) + D * n_upd; 
+
+  });
+
+}
