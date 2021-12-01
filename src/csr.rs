@@ -19,9 +19,12 @@ use bit_vec::BitVec;
 use rand::Rng;
 use rayon::prelude::*;
 use std::fs::File;
+use std::fs;
+use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
     v: usize,
     e: usize,
@@ -126,6 +129,19 @@ impl CSR {
         (maxv + 1, el)
     }
 
+    pub fn bin_serialize_out(&self, pathstr: &String){
+        let gs: Vec<u8> = bincode::serialize(self).unwrap();
+        let path = Path::new(pathstr);
+        fs::write(path,gs).unwrap();
+    }
+
+    pub fn bin_serialize_in(pathstr: &String) -> CSR {
+      let path = Path::new(pathstr);
+      let gs: Vec<u8> = fs::read(path).unwrap();
+      let csr: CSR = bincode::deserialize(&gs).unwrap();
+      csr
+    }
+
     /// Take an edge list in and produce a CSR out
     /// (u,v)
     pub fn new(numv: usize, ref el: Vec<(usize, usize)>) -> CSR {
@@ -225,6 +241,7 @@ impl CSR {
             },
         )
     }
+  
 
     /// read_only_scan is a read only scan of all edges in the entire CSR
     /// that accepts a FnMut(usize,usize,u64) -> () to apply to each vertex
