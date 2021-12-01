@@ -122,7 +122,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     {
         let (nv, el) = CSR::el_from_file("benches/big.graph");
         let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=16", |b| {
+        c.bench_function("PageRank CSR big.graph par=16", |b| {
             b.iter(|| pagerank(&mut csr,16))
         });
     }
