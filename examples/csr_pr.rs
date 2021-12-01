@@ -17,7 +17,7 @@ use raphy::csr::CSR;
 
 fn main() {
     const NUMITERS: usize = 10;
-    let (numv, el) = CSR::el_from_file("examples/in.el");
+    let (numv, el) = CSR::el_from_file("benches/rand.graph");
     let mut csr = CSR::new(numv, el);
 
     csr.get_mut_vtxprop()
@@ -41,7 +41,7 @@ fn main() {
         };
 
         println!("Running Traversal");
-        csr.par_scan(vf);
+        csr.par_scan(16,vf);
     }
 
     csr.get_vtxprop()

@@ -18,7 +18,7 @@ use raphy::csr::CSR;
 
 fn main() {
     const NUMV: usize = 1000;
-    const MAXE: usize = 10000;
+    const MAXE: usize = 100000;
     let csr = CSR::new(NUMV, CSR::random_el(NUMV, MAXE));
     csr.read_only_scan(|v0, v1| println!("{},{}", v0, v1));
 }
