@@ -19,9 +19,7 @@ use bit_vec::BitVec;
 use rand::Rng;
 use rayon::prelude::*;
 use std::fs::File;
-use std::iter;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::RwLock;
 
 #[derive(Debug)]
 pub struct CSR {
@@ -280,11 +278,11 @@ impl CSR {
         }
     }
 
-    pub fn par_scan(&mut self, f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync) -> () {
+    pub fn par_scan(&mut self, par_level: usize, f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync) -> () {
+
         /*basically the number of threads to use*/
-        const NUMCHUNKS: usize = 16;
-        let chunksz: usize = if self.v > NUMCHUNKS {
-            self.v / NUMCHUNKS
+        let chunksz: usize = if self.v > par_level{
+            self.v / par_level 
         } else {
             1
         };
@@ -306,85 +304,6 @@ impl CSR {
             .enumerate()
             .for_each(scan_vtx_row);
         self.vtxprop.copy_from_slice(&vtxprop);
-    }
-
-    fn do_update(
-        &self,
-        v: &Vec<RwLock<f64>>,
-        u: &mut Vec<RwLock<f64>>,
-        f: impl Fn(f64, &[usize], &Vec<RwLock<f64>>) -> f64 + std::marker::Sync,
-    ) {
-        let numv = self.get_v();
-        let nume = self.get_e();
-        let offs = self.get_offsets();
-        let neis = self.get_neighbs();
-
-        (0..numv).into_par_iter().for_each(|i| {
-            /*A vertex i's offsets in neighbs array are offsets[i] to offsets[i+1]*/
-            let (i_start, i_end) = (
-                offs[i],
-                match i {
-                    i if i == numv - 1 => nume,
-                    _ => offs[i + 1],
-                },
-            );
-
-            /*Traverse vertex i's neighbs and call provided f(...) on the edge*/
-            let n_upd: f64 = f(*u[i].read().unwrap(), &neis[i_start..i_end], v);
-
-            /*Update based on damping factor times identity vector + result*/
-            let mut vprop = u[i].write().unwrap();
-            *vprop = n_upd;
-        });
-    }
-
-    pub fn update_traversal(
-        &mut self,
-        iters: usize,
-        f: impl Fn(f64, &[usize], &Vec<RwLock<f64>>) -> f64 + std::marker::Sync,
-    ) {
-        let mut numv = 0;
-        let mut v1: Vec<RwLock<f64>> = Vec::with_capacity(numv);
-        {
-            let csr_i = &*self;
-            numv = csr_i.get_v();
-            let vtxp = self.get_vtxprop();
-            for v in 0..numv {
-                v1.push(RwLock::<f64>::new(vtxp[v]));
-            }
-        }
-
-        let mut v2: Vec<RwLock<f64>> = iter::repeat_with(|| RwLock::<f64>::new(0.0))
-            .take(numv)
-            .collect();
-
-        for iter in 0..iters {
-
-            let csr_i = &*self;
-            let fr = &f;
-
-            if iter % 2 == 0 {
-                let v = &v1;
-                let u = &mut v2;
-                csr_i.do_update(v, u, fr);
-            } else {
-                let v = &v2;
-                let u = &mut v1;
-                csr_i.do_update(v, u, fr);
-            }
-        }
-
-        {
-            let vtxp = self.get_mut_vtxprop();
-            //for i in 0..numv {
-            vtxp.iter_mut().enumerate().for_each(|(i,v)|{
-                if iters % 2 == 0 {
-                    *v = *v1[i].read().unwrap();
-                } else {
-                    *v = *v2[i].read().unwrap();
-                }
-            });
-        }
     }
 
 } /*impl CSR*/
