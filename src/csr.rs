@@ -24,6 +24,10 @@ use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use serde::{Serialize, Deserialize};
 
+use std::fs::OpenOptions;
+use std::path::PathBuf;
+use memmap2::MmapMut;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
     v: usize,
@@ -196,7 +200,7 @@ impl CSR {
           |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
         */
         /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-        for i in 1..ncnt.len() {
+        for i in 1..ncnt.len() { 
             g.offsets[i] = g.offsets[i - 1] + ncnt[i - 1].load(Ordering::SeqCst);
             work_offsets.push(AtomicUsize::new(g.offsets[i]));
         }
@@ -261,6 +265,36 @@ impl CSR {
                 }
             }
         }
+    } 
+
+    pub fn write_csr_mmap(&self, s: String)  {
+
+      let path = PathBuf::from(s);
+      let file = OpenOptions::new()
+                             .read(true)
+                             .write(true)
+                             .create(true)
+                             .open(&path).unwrap();
+      file.set_len( (self.offsets.len() + self.neighbs.len() /*+ 2*/) as u64 *  
+                     8 ).unwrap();
+  
+      let mmap = unsafe { MmapMut::map_mut(&file) };
+
+      let offsets_bytes = unsafe { self.offsets.align_to::<u8>().1 };
+      let neighbs_bytes = unsafe { self.neighbs.align_to::<u8>().1 };
+      /*mmap.as_mut().unwrap().iter_mut().enumerate().for_each(|(i,e)|{
+        *e = self.offsets[i].to_le_bytes();  
+      });
+      */
+
+      /*self.offsets.iter().for_each(|offset| {
+        let offset_bytes = offset.to_le_bytes(); 
+        //mmap.as_mut().unwrap().copy_from_slice(&offset_bytes);
+        mmap.as_mut().unwrap()
+      });*/
+  
+      mmap.unwrap().copy_from_slice(&[offsets_bytes,neighbs_bytes].concat());
+      
     }
 
     /// bfs_traversal starts from vertex start and does a breadth first search
