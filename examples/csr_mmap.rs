@@ -5,11 +5,11 @@ use raphy::csr::CSR;
 
 fn main() {
 
-    const NUMV: usize = 500;
-    const MAXE: usize = 100000;
+    const NUMV: usize = 50;
+    const MAXE: usize = 50;
     let csr = CSR::new(NUMV, CSR::random_el(NUMV, MAXE));
-    csr.write_csr_mmap(String::from("./test-out.g"));
-    //csr.read_only_scan(|v0, v1| println!("{},{}", v0, v1));
+    csr.write_csr_mmap(String::from("/home/blucia/cvsandbox/raphy/test-out.g"));
+    let csr2 = CSR::new_mmap(String::from("/home/blucia/cvsandbox/raphy/test-out.g")); 
 
 }
 

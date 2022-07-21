@@ -15,7 +15,9 @@ extern crate bit_vec;
 extern crate csv;
 extern crate rand;
 
+use std::convert::TryInto;
 use bit_vec::BitVec;
+use byte_slice_cast::*;
 use rand::Rng;
 use rayon::prelude::*;
 use std::fs::File;
@@ -23,10 +25,10 @@ use std::fs;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use serde::{Serialize, Deserialize};
-
 use std::fs::OpenOptions;
 use std::path::PathBuf;
 use memmap2::MmapMut;
+use memmap2::Mmap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
@@ -144,6 +146,39 @@ impl CSR {
       let gs: Vec<u8> = fs::read(path).unwrap();
       let csr: CSR = bincode::deserialize(&gs).unwrap();
       csr
+    }
+
+    fn as_u64_le(array: &[u8; 8]) -> u64 {
+        ((array[0] as u64) <<  0) +
+        ((array[1] as u64) <<  8) +
+        ((array[2] as u64) << 16) +
+        ((array[3] as u64) << 24) +
+        ((array[4] as u64) << 32) +
+        ((array[5] as u64) << 40) +
+        ((array[6] as u64) << 48) +
+        ((array[7] as u64) << 56)
+    }
+
+    /// Take a filename, mmap it, and produce a CSR out
+    /// Note: This is an intermediate point on the road to just
+    /// using the mmapped file as the CSR and eliminating
+    /// the existing structures.
+    pub fn new_mmap(f: String) -> CSR {
+
+      let path = PathBuf::from(f);
+      let file = OpenOptions::new()
+                             .read(true)
+                             .open(&path).unwrap();
+
+      let mmap = unsafe { Mmap::map(&file).unwrap() };
+      assert!(mmap.len() >= 8);
+      //let offsets_len: usize = CSR::as_u64_le(&[mmap[0..7],mmap[1],mmap[2],mmap[3],mmap[4],mmap[5],mmap[6],mmap[7]]) as usize;
+      let offsets_len: usize = CSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
+      let neighbs_len: usize = CSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
+      println!("{} {}",offsets_len,neighbs_len);
+
+      CSR::new(0,Vec::new())
+ 
     }
 
     /// Take an edge list in and produce a CSR out
@@ -267,6 +302,7 @@ impl CSR {
         }
     } 
 
+
     pub fn write_csr_mmap(&self, s: String)  {
 
       let path = PathBuf::from(s);
@@ -275,25 +311,20 @@ impl CSR {
                              .write(true)
                              .create(true)
                              .open(&path).unwrap();
-      file.set_len( (self.offsets.len() + self.neighbs.len() /*+ 2*/) as u64 *  
+      file.set_len( (self.offsets.len() + self.neighbs.len() + 2) as u64 *  
                      8 ).unwrap();
-  
+ 
       let mmap = unsafe { MmapMut::map_mut(&file) };
 
       let offsets_bytes = unsafe { self.offsets.align_to::<u8>().1 };
       let neighbs_bytes = unsafe { self.neighbs.align_to::<u8>().1 };
-      /*mmap.as_mut().unwrap().iter_mut().enumerate().for_each(|(i,e)|{
-        *e = self.offsets[i].to_le_bytes();  
-      });
-      */
-
-      /*self.offsets.iter().for_each(|offset| {
-        let offset_bytes = offset.to_le_bytes(); 
-        //mmap.as_mut().unwrap().copy_from_slice(&offset_bytes);
-        mmap.as_mut().unwrap()
-      });*/
-  
-      mmap.unwrap().copy_from_slice(&[offsets_bytes,neighbs_bytes].concat());
+      mmap.unwrap()
+          .copy_from_slice(
+            &[&self.offsets.len().to_le_bytes(),
+              &self.neighbs.len().to_le_bytes(),
+              offsets_bytes,
+              neighbs_bytes]
+            .concat());
       
     }
 
