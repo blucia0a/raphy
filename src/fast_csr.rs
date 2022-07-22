@@ -16,10 +16,12 @@ use std::fs::OpenOptions;
 use std::path::PathBuf;
 use std::convert::TryInto;
 use rayon::prelude::*;
+use byte_slice_cast::*;
 
 pub struct FastCSR {
     v: usize,
     e: usize,
+    nbase: usize,
     raw: Box<Mmap>
 }
 
@@ -57,12 +59,13 @@ impl FastCSR {
 
     let offsets_len: usize = FastCSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
     let neighbs_len: usize = FastCSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
-    println!("{} {}",offsets_len,neighbs_len);
-    
+
+    println!("{} edges total", neighbs_len);
     FastCSR {
 
       v: offsets_len,
       e: neighbs_len,
+      nbase: 16 + offsets_len*8,
       raw: mmap 
 
     }
@@ -74,16 +77,6 @@ impl FastCSR {
     FastCSR::as_u64_le(self.raw[(16+j)..(16+j)+8].try_into().unwrap())
   }
     
-  fn getchunksize(i: usize) -> usize{
-
-    const NUMCHUNKS: usize = 16;
-    if i > NUMCHUNKS {
-      i / NUMCHUNKS
-    } else {
-      1
-    }
-
-  }
     
   fn vtx_offset_range(&self, v: usize) -> (usize, usize) {
 
@@ -96,24 +89,29 @@ impl FastCSR {
         )
 
   }
+
+  pub fn neighbor_scan(&self, f: impl Fn(usize,&[usize]) -> () + std::marker::Sync){
+
+    (0..self.v).into_par_iter()
+               .for_each(|v| {
+
+      let (n0, nn) = self.vtx_offset_range(v);
+      let edges = &self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+      f(v,&edges[n0..nn]);
+
+    });
+
+  }
   
   pub fn read_only_scan(&self, f: impl Fn(usize,usize) -> () + std::marker::Sync){
 
-    let chunksz = FastCSR::getchunksize(self.v);
     (0..self.v).into_par_iter()
                   .for_each(|v| {
-
       let (n0,nn) = self.vtx_offset_range(v);
-      (n0..nn).into_par_iter()
-              .for_each(|n|{
-
-        //nth neighbor is at offset n*8 from the base of the neighbors array
-        //which is at 2*8 + v*8 + n*8
-        let ni = 2*8 + self.v*8  + n*8;
-       
-        let nv = FastCSR::as_u64_le(self.raw[ni..ni+8].try_into().unwrap()) as usize;
-        f(v,nv);
-
+      let edges = self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+      edges[n0..nn].into_iter()
+                   .for_each(|n|{
+        f(v,*n);
       });
 
     });
@@ -122,21 +120,14 @@ impl FastCSR {
 
   pub fn print(&self){
 
-    let chunksz = FastCSR::getchunksize(self.v);
     (0..self.v).into_par_iter()
                   .for_each(|v| {
 
       let (n0,nn) = self.vtx_offset_range(v);
-      (n0..nn).into_par_iter()
-              .for_each(|n|{
-
-        //nth neighbor is at offset n*8 from the base of the neighbors array
-        //which is at 2*8 + v*8 + n*8
-        let ni = 2*8 + self.v*8  + n*8;
-       
-        let nv = FastCSR::as_u64_le(self.raw[ni..ni+8].try_into().unwrap());
-        println!("{:#x} --> {:#x}",v,nv);
-
+      let edges = self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+      edges[n0..nn].into_iter()
+                   .for_each(|n|{
+          println!("{:#x} --> {:#x}",v,n);
       });
 
     });
