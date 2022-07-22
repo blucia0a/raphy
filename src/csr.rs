@@ -15,9 +15,7 @@ extern crate bit_vec;
 extern crate csv;
 extern crate rand;
 
-use std::convert::TryInto;
 use bit_vec::BitVec;
-use byte_slice_cast::*;
 use rand::Rng;
 use rayon::prelude::*;
 use std::fs::File;
@@ -28,7 +26,6 @@ use serde::{Serialize, Deserialize};
 use std::fs::OpenOptions;
 use std::path::PathBuf;
 use memmap2::MmapMut;
-use memmap2::Mmap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
@@ -147,7 +144,7 @@ impl CSR {
       let csr: CSR = bincode::deserialize(&gs).unwrap();
       csr
     }
-
+/*
     fn as_u64_le(array: &[u8; 8]) -> u64 {
         ((array[0] as u64) <<  0) +
         ((array[1] as u64) <<  8) +
@@ -172,14 +169,24 @@ impl CSR {
 
       let mmap = unsafe { Mmap::map(&file).unwrap() };
       assert!(mmap.len() >= 8);
-      //let offsets_len: usize = CSR::as_u64_le(&[mmap[0..7],mmap[1],mmap[2],mmap[3],mmap[4],mmap[5],mmap[6],mmap[7]]) as usize;
       let offsets_len: usize = CSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
       let neighbs_len: usize = CSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
-      println!("{} {}",offsets_len,neighbs_len);
 
+      let offsets_bytes = mmap[16..16+offsets_len];
+      let neighbs_bytes = mmap[16+offsets_len..];
+
+      let offsets = 
+        LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(offsets_bytes);
+      let neighbs = 
+        LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(neighbs_bytes);
+
+      for i in (0..offsets_len) {
+        println!("{}",offsets[i]);
+      }
       CSR::new(0,Vec::new())
  
     }
+*/
 
     /// Take an edge list in and produce a CSR out
     /// (u,v)
@@ -302,8 +309,7 @@ impl CSR {
         }
     } 
 
-
-    pub fn write_csr_mmap(&self, s: String)  {
+    pub fn write_fastcsr(&self, s: String)  {
 
       let path = PathBuf::from(s);
       let file = OpenOptions::new()
@@ -325,7 +331,7 @@ impl CSR {
               offsets_bytes,
               neighbs_bytes]
             .concat());
-      
+
     }
 
     /// bfs_traversal starts from vertex start and does a breadth first search
