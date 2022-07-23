@@ -11,128 +11,86 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+use byte_slice_cast::*;
 use memmap2::Mmap;
+use rayon::prelude::*;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
-use std::convert::TryInto;
-use rayon::prelude::*;
-use byte_slice_cast::*;
 
 pub struct FastCSR {
     v: usize,
     e: usize,
+    obase: usize,
     nbase: usize,
-    raw: Box<Mmap>
+    raw: Box<Mmap>,
 }
 
 impl FastCSR {
-
-  fn as_u64_le(array: &[u8; 8]) -> u64 {
-        ((array[0] as u64) <<  0) +
-        ((array[1] as u64) <<  8) +
-        ((array[2] as u64) << 16) +
-        ((array[3] as u64) << 24) +
-        ((array[4] as u64) << 32) +
-        ((array[5] as u64) << 40) +
-        ((array[6] as u64) << 48) +
-        ((array[7] as u64) << 56)
-  }
-
-  pub fn getv(&self) -> usize {
-    self.v
-  }
-  
-  pub fn gete(&self) -> usize {
-    self.e
-  }
-
-  pub fn new(s: String) -> FastCSR {
-
-    let path = PathBuf::from(s);
-    let file = OpenOptions::new()
-                             .read(true)
-                             .open(&path).unwrap();
-
-    let mmap = Box::new(unsafe {  Mmap::map(&file).unwrap() });
-
-    assert!(mmap.len() >= 8);
-
-    let offsets_len: usize = FastCSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
-    let neighbs_len: usize = FastCSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
-
-    println!("{} edges total", neighbs_len);
-    FastCSR {
-
-      v: offsets_len,
-      e: neighbs_len,
-      nbase: 16 + offsets_len*8,
-      raw: mmap 
-
+    pub fn getv(&self) -> usize {
+        self.v
     }
 
-  }  
+    pub fn gete(&self) -> usize {
+        self.e
+    }
 
-  pub fn offset(&self, i: usize) -> u64{
-    let j = i * 8; 
-    FastCSR::as_u64_le(self.raw[(16+j)..(16+j)+8].try_into().unwrap())
-  }
-    
-    
-  fn vtx_offset_range(&self, v: usize) -> (usize, usize) {
+    pub fn new(s: String) -> FastCSR {
+        let path = PathBuf::from(s);
+        let file = OpenOptions::new().read(true).open(&path).unwrap();
 
+        let mmap = Box::new(unsafe { Mmap::map(&file).unwrap() });
+
+        assert!(mmap.len() >= 8);
+        let csr = mmap[..]
+                  .as_slice_of::<usize>()
+                  .unwrap();
+
+        let v = csr[0];
+        let e = csr[1];
+
+        println!("{} edges total", e);
+        FastCSR {
+            v: v,
+            e: e,
+            obase: 16,
+            nbase: 16 + v * 8,
+            raw: mmap,
+        }
+    }
+
+    pub fn offset(&self, i: usize) -> usize {
+        let offsets = &self.raw[self.obase..self.nbase]
+            .as_slice_of::<usize>()
+            .unwrap();
+
+        offsets[i]
+    }
+
+    fn vtx_offset_range(&self, v: usize) -> (usize, usize) {
         (
-            self.offset(v) as usize,
+            self.offset(v),
             match v {
-                v if v == self.v - 1 => self.e as usize,
-                _ => self.offset(v + 1) as usize,
+                v if v == self.v - 1 => self.e,
+                _ => self.offset(v + 1),
             },
         )
+    }
 
-  }
+    pub fn neighbor_scan(&self, f: impl Fn(usize, &[usize]) -> () + std::marker::Sync) {
+        (0..self.v).into_par_iter().for_each(|v| {
+            let (n0, nn) = self.vtx_offset_range(v);
+            let edges = &self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+            f(v, &edges[n0..nn]);
+        });
+    }
 
-  pub fn neighbor_scan(&self, f: impl Fn(usize,&[usize]) -> () + std::marker::Sync){
-
-    (0..self.v).into_par_iter()
-               .for_each(|v| {
-
-      let (n0, nn) = self.vtx_offset_range(v);
-      let edges = &self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
-      f(v,&edges[n0..nn]);
-
-    });
-
-  }
-  
-  pub fn read_only_scan(&self, f: impl Fn(usize,usize) -> () + std::marker::Sync){
-
-    (0..self.v).into_par_iter()
-                  .for_each(|v| {
-      let (n0,nn) = self.vtx_offset_range(v);
-      let edges = self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
-      edges[n0..nn].into_iter()
-                   .for_each(|n|{
-        f(v,*n);
-      });
-
-    });
-
-  }
-
-  pub fn print(&self){
-
-    (0..self.v).into_par_iter()
-                  .for_each(|v| {
-
-      let (n0,nn) = self.vtx_offset_range(v);
-      let edges = self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
-      edges[n0..nn].into_iter()
-                   .for_each(|n|{
-          println!("{:#x} --> {:#x}",v,n);
-      });
-
-    });
-
-  }
-  
-
+    pub fn read_only_scan(&self, f: impl Fn(usize, usize) -> () + std::marker::Sync) {
+        (0..self.v).into_par_iter().for_each(|v| {
+            let (n0, nn) = self.vtx_offset_range(v);
+            let edges = self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+            edges[n0..nn].into_iter().for_each(|n| {
+                f(v, *n);
+            });
+        });
+    }
 } /*impl FastCSR*/
