@@ -1,4 +1,3 @@
-
 /*
 Copyright 2020 Brandon Lucia <blucia@gmail.com>
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +16,9 @@ extern crate raphy;
 use raphy::csr::CSR;
 
 fn main() {
-
     let (numv, el) = CSR::el_from_file("examples/dense.graph");
     let mut csr = CSR::new(numv, el);
     csr.bin_serialize_out(&String::from("examples/dense.csr"));
     let dcsr = CSR::bin_serialize_in(&String::from("examples/dense.csr"));
     dcsr.read_only_scan(|i, v| println!("{} {}", i, v));
-    
-
 }

@@ -16,16 +16,16 @@ extern crate csv;
 extern crate rand;
 
 use bit_vec::BitVec;
+use memmap2::MmapMut;
 use rand::Rng;
 use rayon::prelude::*;
-use std::fs::File;
+use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use serde::{Serialize, Deserialize};
+use std::fs::File;
 use std::fs::OpenOptions;
+use std::path::Path;
 use std::path::PathBuf;
-use memmap2::MmapMut;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
@@ -132,61 +132,61 @@ impl CSR {
         (maxv + 1, el)
     }
 
-    pub fn bin_serialize_out(&self, pathstr: &String){
+    pub fn bin_serialize_out(&self, pathstr: &String) {
         let gs: Vec<u8> = bincode::serialize(self).unwrap();
         let path = Path::new(pathstr);
-        fs::write(path,gs).unwrap();
+        fs::write(path, gs).unwrap();
     }
 
     pub fn bin_serialize_in(pathstr: &String) -> CSR {
-      let path = Path::new(pathstr);
-      let gs: Vec<u8> = fs::read(path).unwrap();
-      let csr: CSR = bincode::deserialize(&gs).unwrap();
-      csr
+        let path = Path::new(pathstr);
+        let gs: Vec<u8> = fs::read(path).unwrap();
+        let csr: CSR = bincode::deserialize(&gs).unwrap();
+        csr
     }
-/*
-    fn as_u64_le(array: &[u8; 8]) -> u64 {
-        ((array[0] as u64) <<  0) +
-        ((array[1] as u64) <<  8) +
-        ((array[2] as u64) << 16) +
-        ((array[3] as u64) << 24) +
-        ((array[4] as u64) << 32) +
-        ((array[5] as u64) << 40) +
-        ((array[6] as u64) << 48) +
-        ((array[7] as u64) << 56)
-    }
+    /*
+        fn as_u64_le(array: &[u8; 8]) -> u64 {
+            ((array[0] as u64) <<  0) +
+            ((array[1] as u64) <<  8) +
+            ((array[2] as u64) << 16) +
+            ((array[3] as u64) << 24) +
+            ((array[4] as u64) << 32) +
+            ((array[5] as u64) << 40) +
+            ((array[6] as u64) << 48) +
+            ((array[7] as u64) << 56)
+        }
 
-    /// Take a filename, mmap it, and produce a CSR out
-    /// Note: This is an intermediate point on the road to just
-    /// using the mmapped file as the CSR and eliminating
-    /// the existing structures.
-    pub fn new_mmap(f: String) -> CSR {
+        /// Take a filename, mmap it, and produce a CSR out
+        /// Note: This is an intermediate point on the road to just
+        /// using the mmapped file as the CSR and eliminating
+        /// the existing structures.
+        pub fn new_mmap(f: String) -> CSR {
 
-      let path = PathBuf::from(f);
-      let file = OpenOptions::new()
-                             .read(true)
-                             .open(&path).unwrap();
+          let path = PathBuf::from(f);
+          let file = OpenOptions::new()
+                                 .read(true)
+                                 .open(&path).unwrap();
 
-      let mmap = unsafe { Mmap::map(&file).unwrap() };
-      assert!(mmap.len() >= 8);
-      let offsets_len: usize = CSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
-      let neighbs_len: usize = CSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
+          let mmap = unsafe { Mmap::map(&file).unwrap() };
+          assert!(mmap.len() >= 8);
+          let offsets_len: usize = CSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
+          let neighbs_len: usize = CSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
 
-      let offsets_bytes = mmap[16..16+offsets_len];
-      let neighbs_bytes = mmap[16+offsets_len..];
+          let offsets_bytes = mmap[16..16+offsets_len];
+          let neighbs_bytes = mmap[16+offsets_len..];
 
-      let offsets = 
-        LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(offsets_bytes);
-      let neighbs = 
-        LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(neighbs_bytes);
+          let offsets =
+            LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(offsets_bytes);
+          let neighbs =
+            LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(neighbs_bytes);
 
-      for i in (0..offsets_len) {
-        println!("{}",offsets[i]);
-      }
-      CSR::new(0,Vec::new())
- 
-    }
-*/
+          for i in (0..offsets_len) {
+            println!("{}",offsets[i]);
+          }
+          CSR::new(0,Vec::new())
+
+        }
+    */
 
     /// Take an edge list in and produce a CSR out
     /// (u,v)
@@ -242,7 +242,7 @@ impl CSR {
           |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
         */
         /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
-        for i in 1..ncnt.len() { 
+        for i in 1..ncnt.len() {
             g.offsets[i] = g.offsets[i - 1] + ncnt[i - 1].load(Ordering::SeqCst);
             work_offsets.push(AtomicUsize::new(g.offsets[i]));
         }
@@ -287,7 +287,6 @@ impl CSR {
             },
         )
     }
-  
 
     /// read_only_scan is a read only scan of all edges in the entire CSR
     /// that accepts a FnMut(usize,usize,u64) -> () to apply to each vertex
@@ -307,31 +306,32 @@ impl CSR {
                 }
             }
         }
-    } 
+    }
 
-    pub fn write_fastcsr(&self, s: String)  {
+    pub fn write_fastcsr(&self, s: String) {
+        let path = PathBuf::from(s);
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&path)
+            .unwrap();
+        file.set_len((self.offsets.len() + self.neighbs.len() + 2) as u64 * 8)
+            .unwrap();
 
-      let path = PathBuf::from(s);
-      let file = OpenOptions::new()
-                             .read(true)
-                             .write(true)
-                             .create(true)
-                             .open(&path).unwrap();
-      file.set_len( (self.offsets.len() + self.neighbs.len() + 2) as u64 *  
-                     8 ).unwrap();
- 
-      let mmap = unsafe { MmapMut::map_mut(&file) };
+        let mmap = unsafe { MmapMut::map_mut(&file) };
 
-      let offsets_bytes = unsafe { self.offsets.align_to::<u8>().1 };
-      let neighbs_bytes = unsafe { self.neighbs.align_to::<u8>().1 };
-      mmap.unwrap()
-          .copy_from_slice(
-            &[&self.offsets.len().to_le_bytes(),
-              &self.neighbs.len().to_le_bytes(),
-              offsets_bytes,
-              neighbs_bytes]
-            .concat());
-
+        let offsets_bytes = unsafe { self.offsets.align_to::<u8>().1 };
+        let neighbs_bytes = unsafe { self.neighbs.align_to::<u8>().1 };
+        mmap.unwrap().copy_from_slice(
+            &[
+                &self.offsets.len().to_le_bytes(),
+                &self.neighbs.len().to_le_bytes(),
+                offsets_bytes,
+                neighbs_bytes,
+            ]
+            .concat(),
+        );
     }
 
     /// bfs_traversal starts from vertex start and does a breadth first search
@@ -366,11 +366,14 @@ impl CSR {
         }
     }
 
-    pub fn par_scan(&mut self, par_level: usize, f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync) -> () {
-
+    pub fn par_scan(
+        &mut self,
+        par_level: usize,
+        f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync,
+    ) -> () {
         /*basically the number of threads to use*/
-        let chunksz: usize = if self.v > par_level{
-            self.v / par_level 
+        let chunksz: usize = if self.v > par_level {
+            self.v / par_level
         } else {
             1
         };
@@ -393,5 +396,4 @@ impl CSR {
             .for_each(scan_vtx_row);
         self.vtxprop.copy_from_slice(&vtxprop);
     }
-
 } /*impl CSR*/

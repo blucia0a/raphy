@@ -14,7 +14,7 @@ limitations under the License.
 pub trait VtxTrait: Ord + std::fmt::Debug + std::fmt::Display {}
 impl<T> VtxTrait for T where T: Ord + std::fmt::Debug + std::fmt::Display {}
 
-pub mod fast_csr;
 pub mod csr;
+pub mod fast_csr;
 pub mod graph;
 pub mod vertex;

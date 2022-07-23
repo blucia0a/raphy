@@ -41,11 +41,11 @@ fn main() {
         };
 
         println!("Running Traversal");
-        csr.par_scan(16,vf);
+        csr.par_scan(16, vf);
     }
 
-    csr.get_vtxprop()
-        .iter()
-        .enumerate()
-        .for_each(|(i, v)| println!("{} {}", i, v));
+    /*    csr.get_vtxprop()
+    .iter()
+    .enumerate()
+    .for_each(|(i, v)| println!("{} {}", i, v));*/
 }

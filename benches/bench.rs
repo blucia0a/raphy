@@ -85,18 +85,16 @@ pub fn seq_pagerank(csr: &mut CSR) {
       }
     }
     */
-
 }
 
-pub fn pagerank(csr: &mut CSR,par_level: usize) {
-
+pub fn pagerank(csr: &mut CSR, par_level: usize) {
     let numv = csr.get_v();
 
     csr.get_mut_vtxprop()
         .iter_mut()
         .for_each(|vp: &mut f64| *vp = 1.0 / (numv as f64));
 
-    for _ in 0..ITERS{
+    for _ in 0..ITERS {
         let mut vp = vec![0.0; numv];
         vp.clone_from_slice(csr.get_vtxprop());
 
@@ -112,54 +110,43 @@ pub fn pagerank(csr: &mut CSR,par_level: usize) {
             (1.0 - D) / (numv as f64) + D * n_upd
         };
 
-        csr.par_scan(par_level,vf);
+        csr.par_scan(par_level, vf);
     }
-
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-
     {
         let (nv, el) = CSR::el_from_file("benches/big.graph");
         let mut csr = CSR::new(nv, el);
         c.bench_function("PageRank CSR big.graph par=16", |b| {
-            b.iter(|| pagerank(&mut csr,16))
+            b.iter(|| pagerank(&mut csr, 16))
         });
     }
 
     {
         let (nv, el) = CSR::el_from_file("benches/rand.graph");
         let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=16", |b| {
-            b.iter(|| pagerank(&mut csr,16))
-        });
+        c.bench_function("PageRank CSR par=16", |b| b.iter(|| pagerank(&mut csr, 16)));
     }
-    
+
     {
         let (nv, el) = CSR::el_from_file("benches/rand.graph");
         let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=8", |b| {
-            b.iter(|| pagerank(&mut csr,8))
-        });
+        c.bench_function("PageRank CSR par=8", |b| b.iter(|| pagerank(&mut csr, 8)));
     }
-    
+
     {
         let (nv, el) = CSR::el_from_file("benches/rand.graph");
         let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=4", |b| {
-            b.iter(|| pagerank(&mut csr,4))
-        });
+        c.bench_function("PageRank CSR par=4", |b| b.iter(|| pagerank(&mut csr, 4)));
     }
-    
+
     {
         let (nv, el) = CSR::el_from_file("benches/rand.graph");
         let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=2", |b| {
-            b.iter(|| pagerank(&mut csr,2))
-        });
+        c.bench_function("PageRank CSR par=2", |b| b.iter(|| pagerank(&mut csr, 2)));
     }
-    
-    
+
     {
         let (nv, el) = CSR::el_from_file("benches/rand.graph");
         let mut csr = CSR::new(nv, el);
@@ -167,7 +154,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             b.iter(|| seq_pagerank(&mut csr))
         });
     }
-
 }
 
 criterion_group!(benches, criterion_benchmark);
