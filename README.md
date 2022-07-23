@@ -60,6 +60,7 @@ The function gets called for each edge in your graph.
 Here is an example program that implements something like the PageRank algorithm:
 
 ```
+
 fn main() {
 
     let fcsr = FastCSR::new(String::from("./large.csr"));
@@ -99,6 +100,7 @@ fn main() {
     });
     
 }
+
 ```
 
 
@@ -117,6 +119,7 @@ this parameter.  The second argument is a filename string containing the binary 
 An example program to generate a FastCSR from a binary edge list would do this:
 
 ```
+
 fn main() {
 
     let csr = CSR::new_from_el_mmap(10000000,String::from("large.el"));
@@ -124,6 +127,7 @@ fn main() {
     csr.write_fastcsr(String::from("large.csr"));
     
 }
+
 ```
 
 ## raphy::graph::Graph - A basic graph data structure
