@@ -16,7 +16,7 @@ extern crate csv;
 extern crate rand;
 
 use bit_vec::BitVec;
-use memmap2::MmapMut;
+use memmap2::{MmapMut,Mmap};
 use rand::Rng;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -26,6 +26,7 @@ use std::fs::OpenOptions;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use byte_slice_cast::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CSR {
@@ -155,38 +156,72 @@ impl CSR {
             ((array[6] as u64) << 48) +
             ((array[7] as u64) << 56)
         }
-
-        /// Take a filename, mmap it, and produce a CSR out
-        /// Note: This is an intermediate point on the road to just
-        /// using the mmapped file as the CSR and eliminating
-        /// the existing structures.
-        pub fn new_mmap(f: String) -> CSR {
-
-          let path = PathBuf::from(f);
-          let file = OpenOptions::new()
-                                 .read(true)
-                                 .open(&path).unwrap();
-
-          let mmap = unsafe { Mmap::map(&file).unwrap() };
-          assert!(mmap.len() >= 8);
-          let offsets_len: usize = CSR::as_u64_le(&mmap[0..8].try_into().unwrap()) as usize;
-          let neighbs_len: usize = CSR::as_u64_le(&mmap[8..16].try_into().unwrap()) as usize;
-
-          let offsets_bytes = mmap[16..16+offsets_len];
-          let neighbs_bytes = mmap[16+offsets_len..];
-
-          let offsets =
-            LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(offsets_bytes);
-          let neighbs =
-            LayoutVerified::<_, [U64<LittleEndian>]>::new_slice_unaligned(neighbs_bytes);
-
-          for i in (0..offsets_len) {
-            println!("{}",offsets[i]);
-          }
-          CSR::new(0,Vec::new())
-
-        }
     */
+    pub fn new_from_el_mmap(v: usize, f: String) -> CSR {
+
+        let path = PathBuf::from(f);
+        let file = OpenOptions::new()
+                   .read(true)
+                   .open(&path)
+                   .unwrap();
+
+        let mmap = unsafe { Mmap::map(&file).unwrap() };
+        let el = mmap[..]
+                 .as_slice_of::<usize>()
+                 .unwrap();
+
+        let mut ncnt  = Vec::with_capacity(v);
+        for _ in 0..v {
+            ncnt.push(AtomicUsize::new(0));
+        }
+
+        /*Count up the number of neighbors that each vertex has */
+        el.chunks(2).par_bridge().for_each(|e| {
+            ncnt[ e[0] ].fetch_add(1, Ordering::SeqCst);
+        });
+
+        let mut work_offsets = Vec::with_capacity(v);
+        work_offsets.push(AtomicUsize::new(0));
+
+        let mut g = CSR {
+            v: v,
+            e: el.chunks(2).len(),
+            vtxprop: vec![0f64; v],
+            offsets: vec![0; v],
+            neighbs: vec![0; el.chunks(2).len()],
+        };
+
+        /* CSR Structure e.g.,
+          |0,3,5,6,9|
+          |v2,v3,v5|v1,v9|v2|v3,v7,v8|x|
+        */
+        /*vertex i's offset is vtx i-1's offset + i's neighbor count*/
+        for i in 1..ncnt.len() {
+            g.offsets[i] = g.offsets[i - 1] + ncnt[i - 1].load(Ordering::SeqCst);
+            work_offsets.push(AtomicUsize::new(g.offsets[i]));
+        }
+
+        /*Temporary synchronized edge list array*/
+        let mut nbs = Vec::with_capacity(el.chunks(2).len());
+        for _ in 0..el.chunks(2).len() {
+            nbs.push(AtomicUsize::new(0));
+        }
+
+        /*Populate the neighbor array based on the counts*/
+        el.chunks(2).par_bridge().for_each(|e| {
+            let cur_ind = work_offsets[e[0]].fetch_add(1, Ordering::SeqCst);
+            nbs[cur_ind].store(e[1], Ordering::Relaxed);
+        });
+
+        g.neighbs.par_iter_mut().enumerate().for_each(|(i,e)| {
+            *e = nbs[i].load(Ordering::Relaxed);
+        });
+
+        /*return the graph, g*/
+        g
+
+
+    }
 
     /// Take an edge list in and produce a CSR out
     /// (u,v)

@@ -5,7 +5,7 @@ use raphy::fast_csr::FastCSR;
 use std::sync::RwLock;
 
 fn main() {
-    let fcsr = FastCSR::new(String::from("./big.csr"));
+    let fcsr = FastCSR::new(String::from("./large.csr"));
 
     let mut vp1 = Vec::new();
     for _ in 0..fcsr.getv() {
