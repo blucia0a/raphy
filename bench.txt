@@ -1,0 +1,59 @@
+csr_pr:
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --example csr_pr                                      Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)                                         Finished dev [unoptimized + debuginfo] target(s) in 0.86s                                      Running `target/debug/examples/csr_pr`                                                   Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             Running Traversal                                                                             CSR Build Time: 154327ms                                                                      Total Iters Time: 34237ms                                                                     Average Iter Time: 3398ms 
+(iters: 33.98ns / vtx
+ build: 1540ns  / vtx
+)
+
+fast_csr_basic:
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --example fast_csr_basic                              Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)                                         Finished dev [unoptimized + debuginfo] target(s) in 1.05s                                      Running `target/debug/examples/fast_csr_basic`                                           100000000 edges total                                                                         CSR Build Time: 0ms                                                                           Total Iters Time: 73448ms                                                                     Average Iter Time: 7344.8ms 
+(73.44ns / vtx)
+
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --example fast_csr_pr
+   Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)
+    Finished dev [unoptimized + debuginfo] target(s) in 1.33s
+     Running `target/debug/examples/fast_csr_pr`
+100000000 edges total
+CSR Build Time: 0ms
+Total Iters Time: 51626ms
+Average Iter Time: 5162.6ms
+(51.62ns / vtx) == (154cyc / vtx)
+
+Release:
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --release --example fast_csr_pr
+Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)
+Finished release [optimized] target(s) in 1.19s
+Running `target/release/examples/fast_csr_pr`
+100000000 edges total
+CSR Build Time: 0ms
+Total Iters Time: 7165ms
+Average Iter Time: 716.5ms
+7.16ns / vtx == 21.5 cyc / vtx
+
+blucia@Narsaq:~/cvsandbox/raphy$
+cargo run --release --example fast_csr_pr_rwlocks               
+Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)
+Finished release [optimized] target(s) in 1.31s
+Running `target/release/examples/fast_csr_pr_rwlocks`
+100000000 edges total
+CSR Build Time: 0ms
+Total Iters Time: 21553ms
+Average Iter Time: 1969.8ms
+
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --release --example csr_pr
+Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)
+Finished release [optimized] target(s) in 1.21s
+Running `target/release/examples/csr_pr`
+CSR Build Time: 64052ms
+Total Iters Time: 7550ms
+Average Iter Time: 735.5ms
+7.36ns / vtx + 640ns / vtx 
+
+blucia@Narsaq:~/cvsandbox/raphy$ cargo run --release --example fast_csr_null
+Compiling raphy v0.1.12 (/home/blucia/cvsandbox/raphy)
+Finished release [optimized] target(s) in 1.20s
+Running `target/release/examples/fast_csr_null`
+100000000 edges total
+CSR Build Time: 0ms
+Total Iters Time: 956ms
+Average Iter Time: 95.6ms
+0.96ns / vtx == 2.88cyc / vtx
