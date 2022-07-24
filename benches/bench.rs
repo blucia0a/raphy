@@ -7,6 +7,8 @@ use bit_vec::BitVec;
 use criterion::{criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use raphy::csr::CSR;
+use raphy::fast_csr::FastCSR;
+use std::sync::RwLock;
 
 const ITERS: usize = 3;
 
@@ -17,6 +19,40 @@ pub fn bfs(csr: &mut CSR) {
     let start: usize = rng.gen_range(0, csr.get_v()) as usize;
 
     csr.bfs_traversal(start, |v| bv.set(v, true));
+}
+
+pub fn fastcsr_pagerank(fcsr: &FastCSR){
+
+    let mut vp1 = Vec::new();
+    for _ in 0..fcsr.getv() {
+        vp1.push(RwLock::new(0.0));
+    }
+
+    for _ in 0..ITERS {
+        let mut vp2 = Vec::new();
+        for _ in 0..fcsr.getv() {
+            vp2.push(RwLock::new(0.0));
+        }
+
+        let vf = |v: usize, nei: &[usize]| {
+            const D: f64 = 0.85;
+            let mut n_upd: f64 = 0.0;
+
+            nei.iter()
+                .for_each(|v1| n_upd = n_upd + *vp1[*v1].read().unwrap() / (nei.len() as f64));
+
+            {
+                let mut prop = vp2[v].write().unwrap();
+                *prop = (1.0 - D) / (fcsr.getv() as f64) + D * n_upd;
+            }
+        };
+
+        fcsr.neighbor_scan(vf);
+        for v in 0..(vp1.len() - 1) {
+            *vp1[v].write().unwrap() = *vp2[v].read().unwrap();
+        }
+    }
+
 }
 
 pub fn seq_pagerank(csr: &mut CSR) {
@@ -115,44 +151,23 @@ pub fn pagerank(csr: &mut CSR, par_level: usize) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    {
-        let (nv, el) = CSR::el_from_file("benches/big.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR big.graph par=16", |b| {
-            b.iter(|| pagerank(&mut csr, 16))
-        });
-    }
 
     {
-        let (nv, el) = CSR::el_from_file("benches/rand.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=16", |b| b.iter(|| pagerank(&mut csr, 16)));
-    }
 
-    {
-        let (nv, el) = CSR::el_from_file("benches/rand.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=8", |b| b.iter(|| pagerank(&mut csr, 8)));
-    }
+      let mut csr = CSR::new_from_el_mmap(10000000,String::from("./large.el"));
+      c.bench_function("CSR PageRank CSR", |b| {
+          b.iter(|| pagerank(&mut csr, 16))
+      });
 
-    {
-        let (nv, el) = CSR::el_from_file("benches/rand.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=4", |b| b.iter(|| pagerank(&mut csr, 4)));
     }
-
+   
     {
-        let (nv, el) = CSR::el_from_file("benches/rand.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank CSR par=2", |b| b.iter(|| pagerank(&mut csr, 2)));
-    }
 
-    {
-        let (nv, el) = CSR::el_from_file("benches/rand.graph");
-        let mut csr = CSR::new(nv, el);
-        c.bench_function("PageRank Seq. CSR |V|=100000 ~50 e / v:", |b| {
-            b.iter(|| seq_pagerank(&mut csr))
-        });
+      let fcsr = FastCSR::new(String::from("./large.csr"));
+      c.bench_function("FastCSR PageRank", |b| {
+          b.iter(|| fastcsr_pagerank(&fcsr))
+      });    
+
     }
 }
 
