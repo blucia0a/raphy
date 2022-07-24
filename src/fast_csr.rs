@@ -75,6 +75,14 @@ impl FastCSR {
             },
         )
     }
+    pub fn neighbor_scan_prop(&self, f: impl Fn(usize, &[usize]) -> f64 + std::marker::Sync, prop: &mut [f64]) {
+        prop.par_iter_mut().enumerate().for_each(|(v,p)| {
+            let (n0, nn) = self.vtx_offset_range(v);
+            let edges = &self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+            let res = f(v, &edges[n0..nn]);
+            *p = res;
+        });
+    }
 
     pub fn neighbor_scan(&self, f: impl Fn(usize, &[usize]) -> () + std::marker::Sync) {
         (0..self.v).into_par_iter().for_each(|v| {
