@@ -18,7 +18,3 @@ csv = "1.1"
 memmap2 = "0.5.4"
 byteorder = "1.4.3"
 byte-slice-cast = "1.2.1"
-
-[[bench]]
-name = "bench"
-harness = false
