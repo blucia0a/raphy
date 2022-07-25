@@ -1,6 +1,6 @@
 [package]
 name = "raphy"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Brandon Lucia <blucia@gmail.com>"]
 edition = "2018"
 description = "A graph data structure library"
