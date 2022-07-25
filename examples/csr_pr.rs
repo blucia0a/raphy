@@ -18,7 +18,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
     const NUMITERS: usize = 10;
-    const NUMV: usize = 1000000; 
+    const NUMV: usize = 500000; 
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
 
     let mut csr = CSR::new_from_el_mmap(NUMV,String::from("graphs/large.el"));
