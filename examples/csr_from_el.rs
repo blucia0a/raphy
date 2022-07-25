@@ -15,7 +15,7 @@ extern crate raphy;
 use raphy::csr::CSR;
 
 fn main() {
-    let (numv, el) = CSR::el_from_file("examples/big.el");
+    let (numv, el) = CSR::el_from_file("examples/big.csv");
     let csr = CSR::new(numv, el);
     csr.read_only_scan(|v0, v1| println!("{},{}", v0, v1));
 }

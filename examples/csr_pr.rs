@@ -18,10 +18,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
     const NUMITERS: usize = 10;
-    const NUMV: usize = 10000000; 
+    const NUMV: usize = 1000000; 
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
 
-    let mut csr = CSR::new_from_el_mmap(NUMV,String::from("large.el"));
+    let mut csr = CSR::new_from_el_mmap(NUMV,String::from("graphs/large.el"));
 
     let setup = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
 
@@ -48,7 +48,6 @@ fn main() {
             (1.0 - D) / (NUMV as f64) + D * n_upd
         };
 
-        println!("Running Traversal");
         let iter_start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
         csr.par_scan(16, vf);
         let iter_end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();

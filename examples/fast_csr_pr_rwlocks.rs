@@ -11,7 +11,7 @@ fn main() {
 
     const NUMITERS: usize = 10;
     let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-    let fcsr = FastCSR::new(String::from("./large.csr"));
+    let fcsr = FastCSR::new(String::from("graphs/large.csr"));
     let setup = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
 
     let mut vp1 = Vec::with_capacity(fcsr.getv());
