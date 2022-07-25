@@ -66,6 +66,12 @@ impl FastCSR {
         offsets[i]
     }
 
+    pub fn neighbors(&self, i: usize) -> &[usize] {
+        let (n0, nn) = self.vtx_offset_range(i);
+        let edges = &self.raw[self.nbase..].as_slice_of::<usize>().unwrap();
+        &edges[n0..nn]
+    }
+
     fn vtx_offset_range(&self, v: usize) -> (usize, usize) {
         (
             self.offset(v),
