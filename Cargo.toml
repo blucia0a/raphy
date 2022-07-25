@@ -9,6 +9,8 @@ homepage = "https://brandonlucia.com"
 repository = "https://github.com/blucia0a/raphy"
 documentation = "https://github.com/blucia0a/raphy/blob/master/README.md"
 readme = "README.md"
+exclude = [ "graphs/large.csr", "graphs/large.el" ]
+
 
 [dependencies]
 rand = "0.7.0"
