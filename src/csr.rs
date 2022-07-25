@@ -19,7 +19,6 @@ use bit_vec::BitVec;
 use memmap2::{MmapMut,Mmap};
 use rand::Rng;
 use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -28,7 +27,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use byte_slice_cast::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct CSR {
     v: usize,
     e: usize,
@@ -133,30 +132,6 @@ impl CSR {
         (maxv + 1, el)
     }
 
-    pub fn bin_serialize_out(&self, pathstr: &String) {
-        let gs: Vec<u8> = bincode::serialize(self).unwrap();
-        let path = Path::new(pathstr);
-        fs::write(path, gs).unwrap();
-    }
-
-    pub fn bin_serialize_in(pathstr: &String) -> CSR {
-        let path = Path::new(pathstr);
-        let gs: Vec<u8> = fs::read(path).unwrap();
-        let csr: CSR = bincode::deserialize(&gs).unwrap();
-        csr
-    }
-    /*
-        fn as_u64_le(array: &[u8; 8]) -> u64 {
-            ((array[0] as u64) <<  0) +
-            ((array[1] as u64) <<  8) +
-            ((array[2] as u64) << 16) +
-            ((array[3] as u64) << 24) +
-            ((array[4] as u64) << 32) +
-            ((array[5] as u64) << 40) +
-            ((array[6] as u64) << 48) +
-            ((array[7] as u64) << 56)
-        }
-    */
     pub fn new_from_el_mmap(v: usize, f: String) -> CSR {
 
         let path = PathBuf::from(f);
